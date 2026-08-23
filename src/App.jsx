@@ -5,7 +5,6 @@ const ADMIN_EMAIL = 'techflowlabs6@gmail.com';
 const INITIAL_APPS = [
   {
     id: '1',
-    keyNumber: '1',
     name: 'French Learner App',
     shortNote: 'AI Grammar, Vocab & Pronunciation for French Readers',
     url: 'https://french.mytechflowlabs.com/',
@@ -14,7 +13,6 @@ const INITIAL_APPS = [
   },
   {
     id: '2',
-    keyNumber: '2',
     name: 'TimeLog Pro',
     shortNote: 'Internal Time Management & Billable Revenue Tracker',
     url: 'https://timelog.mytechflowlabs.com/',
@@ -23,7 +21,6 @@ const INITIAL_APPS = [
   },
   {
     id: '3',
-    keyNumber: '3',
     name: 'TCF Preparation Suite',
     shortNote: 'Official Format Mock Tests & Canadian CLB Score Predictor',
     url: 'https://tcf.mytechflowlabs.com/',
@@ -32,7 +29,6 @@ const INITIAL_APPS = [
   },
   {
     id: '4',
-    keyNumber: '4',
     name: 'Driver Earnings Tracker',
     shortNote: 'Rideshare Shift Profit, Fuel Deductions & Net Hourly Calculator',
     url: 'https://driver.mytechflowlabs.com/',
@@ -62,7 +58,7 @@ const SKILLS = [
 
 export default function App() {
   const [apps, setApps] = useState(() => {
-    const saved = localStorage.getItem('mytechflow_apps_v4');
+    const saved = localStorage.getItem('mytechflow_apps_clean');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -74,7 +70,7 @@ export default function App() {
   });
 
   const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('mytechflow_admin_v4') === 'true';
+    return localStorage.getItem('mytechflow_admin_clean') === 'true';
   });
 
   const [search, setSearch] = useState('');
@@ -96,45 +92,12 @@ export default function App() {
 
   // Save to localStorage
   useEffect(() => {
-    localStorage.setItem('mytechflow_apps_v4', JSON.stringify(apps));
+    localStorage.setItem('mytechflow_apps_clean', JSON.stringify(apps));
   }, [apps]);
 
   useEffect(() => {
-    localStorage.setItem('mytechflow_admin_v4', isAdmin ? 'true' : 'false');
+    localStorage.setItem('mytechflow_admin_clean', isAdmin ? 'true' : 'false');
   }, [isAdmin]);
-
-  // Global Keyboard Shortcuts (1, 2, 3, 4 to launch apps; / to search; Escape to close modals)
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Don't trigger if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-        return;
-      }
-
-      if (e.key === '1') {
-        const app1 = apps.find(a => a.id === '1');
-        if (app1?.url) window.open(app1.url, '_blank');
-      } else if (e.key === '2') {
-        const app2 = apps.find(a => a.id === '2');
-        if (app2?.url) window.open(app2.url, '_blank');
-      } else if (e.key === '3') {
-        const app3 = apps.find(a => a.id === '3');
-        if (app3?.url) window.open(app3.url, '_blank');
-      } else if (e.key === '4') {
-        const app4 = apps.find(a => a.id === '4');
-        if (app4?.url) window.open(app4.url, '_blank');
-      } else if (e.key === '/') {
-        e.preventDefault();
-        document.getElementById('searchInput')?.focus();
-      } else if (e.key === 'Escape') {
-        setIsLoginModalOpen(false);
-        setIsAppModalOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [apps]);
 
   const filteredApps = apps.filter(app =>
     app.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -200,7 +163,6 @@ export default function App() {
     } else {
       const newApp = {
         id: Date.now().toString(),
-        keyNumber: (apps.length + 1).toString(),
         name: formName,
         shortNote: formShortNote,
         url: formUrl,
@@ -216,6 +178,12 @@ export default function App() {
   const handleDeleteApp = (id) => {
     if (window.confirm('Delete this app from the dashboard?')) {
       setApps(prev => prev.filter(a => a.id !== id));
+    }
+  };
+
+  const handleCardClick = (url) => {
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -235,7 +203,7 @@ export default function App() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search apps... (Press '/' to focus)"
+              placeholder="Search apps..."
             />
           </div>
 
@@ -265,121 +233,42 @@ export default function App() {
         <div className="hero-banner">
           <div className="hero-text">
             <h2>Welcome to MyTechFlow Labs</h2>
-            <p>Application portal & shortcuts to launch our web apps directly.</p>
+            <p>Direct shortcuts to launch all our production web applications.</p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {isAdmin && (
-              <button onClick={handleOpenAddModal} className="btn btn-blue">
-                + Add New App
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Launch Shortcut Bar */}
-        <div style={{
-          backgroundColor: '#020617',
-          border: '1px solid #1e293b',
-          borderRadius: '12px',
-          padding: '16px',
-          marginBottom: '24px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
-              🚀 Quick App Shortcuts (Click or press [1 - 4] on your keyboard):
-            </span>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: 'monospace' }}>
-              Hotkeys: <kbd style={{ padding: '2px 6px', background: '#1e293b', borderRadius: '4px' }}>1</kbd> <kbd style={{ padding: '2px 6px', background: '#1e293b', borderRadius: '4px' }}>2</kbd> <kbd style={{ padding: '2px 6px', background: '#1e293b', borderRadius: '4px' }}>3</kbd> <kbd style={{ padding: '2px 6px', background: '#1e293b', borderRadius: '4px' }}>4</kbd> <kbd style={{ padding: '2px 6px', background: '#1e293b', borderRadius: '4px' }}>/</kbd>
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
-            {apps.slice(0, 4).map((app, idx) => (
-              <a
-                key={app.id}
-                href={app.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 14px',
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  color: '#ffffff',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#334155'}
-              >
-                <span style={{
-                  width: '24px',
-                  height: '24px',
-                  backgroundColor: '#2563eb',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  flexShrink: 0
-                }}>
-                  {idx + 1}
-                </span>
-                <div style={{ overflow: 'hidden' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 'bold', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                    {app.name}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#60a5fa', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                    {app.shortNote || app.name}
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
+          {isAdmin && (
+            <button onClick={handleOpenAddModal} className="btn btn-blue">
+              + Add New App
+            </button>
+          )}
         </div>
 
         {/* Applications Section */}
         <div>
           <div className="section-title">
-            <span>Applications Repository ({filteredApps.length})</span>
+            <span>Applications ({filteredApps.length})</span>
             {isAdmin && (
               <span style={{ fontSize: '12px', color: '#c084fc', fontWeight: 'normal' }}>
-                Admin Mode Active (Edit / Delete Enabled)
+                Admin Mode Active
               </span>
             )}
           </div>
 
           {filteredApps.length > 0 ? (
             <div className="cards-grid">
-              {filteredApps.map((app, index) => (
-                <div key={app.id} className="card">
-                  <div style={{ position: 'relative' }}>
-                    <img
-                      src={app.imageUrl}
-                      alt={app.name}
-                      className="card-img"
-                      loading="lazy"
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      top: '8px',
-                      left: '8px',
-                      padding: '2px 8px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontFamily: 'monospace',
-                      fontWeight: 'bold',
-                      color: '#60a5fa'
-                    }}>
-                      Shortcut [{index + 1}]
-                    </span>
-                  </div>
+              {filteredApps.map((app) => (
+                <div
+                  key={app.id}
+                  className="card"
+                  onClick={() => handleCardClick(app.url)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <img
+                    src={app.imageUrl}
+                    alt={app.name}
+                    className="card-img"
+                    loading="lazy"
+                  />
 
                   <div className="card-body">
                     <div>
@@ -399,7 +288,7 @@ export default function App() {
                       <div className="card-desc">{app.description}</div>
                     </div>
 
-                    <div className="card-actions">
+                    <div className="card-actions" onClick={(e) => e.stopPropagation()}>
                       <a
                         href={app.url}
                         target="_blank"
@@ -444,7 +333,7 @@ export default function App() {
         {/* Skills Section */}
         <div className="skills-box">
           <div className="section-title" style={{ marginBottom: '8px' }}>
-            <span>Skills & What I Can Do</span>
+            <span>Skills & Capabilities</span>
           </div>
           <p style={{ color: '#94a3b8', fontSize: '13px' }}>
             Core full-stack engineering expertise across web technologies:
@@ -546,7 +435,7 @@ export default function App() {
               </div>
 
               <div className="form-group">
-                <label>Short Note / Headline</label>
+                <label>Short Note / Tagline</label>
                 <input
                   type="text"
                   value={formShortNote}
