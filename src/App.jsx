@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const ADMIN_EMAIL = 'techflowlabs6@gmail.com';
+const CONTACT_MAILTO = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent('Inquiry via MyTechFlow Labs')}&body=${encodeURIComponent('Hi MyTechFlow Labs team,\n\nI am reaching out regarding...')}`;
 
 const INITIAL_APPS = [
   {
@@ -207,7 +208,16 @@ export default function App() {
             />
           </div>
 
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Contact Us button that directly opens email */}
+            <a
+              href={CONTACT_MAILTO}
+              className="btn btn-blue btn-sm"
+              title="Send email to techflowlabs6@gmail.com"
+            >
+              ✉️ Contact Us
+            </a>
+
             {isAdmin ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '12px', color: '#c084fc', fontFamily: 'monospace' }}>
@@ -236,11 +246,20 @@ export default function App() {
             <p>Direct shortcuts to launch all our production web applications.</p>
           </div>
 
-          {isAdmin && (
-            <button onClick={handleOpenAddModal} className="btn btn-blue">
-              + Add New App
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <a
+              href={CONTACT_MAILTO}
+              className="btn btn-gray"
+            >
+              ✉️ Get in Touch
+            </a>
+
+            {isAdmin && (
+              <button onClick={handleOpenAddModal} className="btn btn-blue">
+                + Add New App
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Applications Section */}
@@ -355,8 +374,8 @@ export default function App() {
       <footer>
         <div className="container">
           <p>© {new Date().getFullYear()} MyTechFlow Labs (mytechflowlabs.com). All rights reserved.</p>
-          <p style={{ marginTop: '4px' }}>
-            Contact: <a href={`mailto:${ADMIN_EMAIL}`}>{ADMIN_EMAIL}</a>
+          <p style={{ marginTop: '8px' }}>
+            Questions or feedback? <a href={CONTACT_MAILTO} style={{ color: '#60a5fa', fontWeight: '600' }}>✉️ Contact Us ({ADMIN_EMAIL})</a>
           </p>
         </div>
       </footer>
