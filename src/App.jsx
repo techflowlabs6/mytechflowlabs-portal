@@ -3,14 +3,15 @@ import React, { useState, useEffect } from 'react';
 const ADMIN_EMAIL = 'techflowlabs6@gmail.com';
 const CONTACT_MAILTO = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent('Inquiry via MyTechFlow Labs')}&body=${encodeURIComponent('Hi MyTechFlow Labs team,\n\nI am reaching out regarding...')}`;
 
-const INITIAL_APPS = [
+export const INITIAL_APPS = [
   {
     id: '1',
     name: 'French Learner App',
     shortNote: 'AI Grammar, Vocab & Pronunciation for French Readers',
     url: 'https://french.mytechflowlabs.com/',
     imageUrl: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=600&q=80',
-    description: 'AI-assisted French vocabulary, pronunciation audio, grammar rules, and interactive reading exercises for French learners.'
+    description: 'AI-assisted French vocabulary, pronunciation audio, grammar rules, and interactive reading exercises for French learners.',
+    category: 'Education'
   },
   {
     id: '2',
@@ -18,7 +19,8 @@ const INITIAL_APPS = [
     shortNote: 'Internal Time Management & Billable Revenue Tracker',
     url: 'https://timelog.mytechflowlabs.com/',
     imageUrl: 'https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&q=80',
-    description: 'Internal time log management tool, Pomodoro focus sessions, productivity tracking, and billable revenue analytics.'
+    description: 'Internal time log management tool, Pomodoro focus sessions, productivity tracking, and billable revenue analytics.',
+    category: 'Productivity'
   },
   {
     id: '3',
@@ -26,7 +28,8 @@ const INITIAL_APPS = [
     shortNote: 'Official Format Mock Tests & Canadian CLB Score Predictor',
     url: 'https://tcf.mytechflowlabs.com/',
     imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80',
-    description: 'Official format mock exam tests, listening & reading comprehension practice, and Canadian CLB score prediction.'
+    description: 'Official format mock exam tests, listening & reading comprehension practice, and Canadian CLB score prediction.',
+    category: 'Education'
   },
   {
     id: '4',
@@ -34,37 +37,81 @@ const INITIAL_APPS = [
     shortNote: 'Rideshare Shift Profit, Fuel Deductions & Net Hourly Calculator',
     url: 'https://driver.mytechflowlabs.com/',
     imageUrl: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=600&q=80',
-    description: 'Rideshare shift money calculator, fuel expense logs, tax deductions, and net hourly profit analytics.'
+    description: 'Rideshare shift money calculator, fuel expense logs, tax deductions, and net hourly profit analytics.',
+    category: 'Finance'
+  },
+  {
+    id: '5',
+    name: 'Lost Frontier 3D Runner',
+    shortNote: 'High-Speed 3D Sci-Fi Endless Arcade Runner with Procedural Worlds',
+    url: 'https://lostrun.mytechflowlabs.com/',
+    imageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80',
+    description: 'High-octane 3D endless runner featuring procedural terrain generation, obstacle dodging, cyber soundtrack, and real-time score leaderboards.',
+    category: '3D Games & Arcade'
+  },
+  {
+    id: '6',
+    name: 'Neon Dodge Rush',
+    shortNote: 'Fast-Paced Neon Grid Arcade Dodger & Bullet Hell Survival',
+    url: 'https://neon.mytechflowlabs.com/',
+    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80',
+    description: 'Adrenaline-fueled retro neon grid arcade game with dynamic hazards, speed multipliers, particle effects, and high-score survival.',
+    category: '3D Games & Arcade'
+  },
+  {
+    id: '7',
+    name: 'Reflex Rush',
+    shortNote: 'Sub-Millisecond Reaction Speed & Reflex Training Arena',
+    url: 'https://reflex.mytechflowlabs.com/',
+    imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
+    description: 'Competitive reflex speed benchmark tool featuring visual stimulus tracking, reaction time analytics, and precision accuracy tests.',
+    category: '3D Games & Arcade'
+  },
+  {
+    id: '8',
+    name: 'Smash Hit 3D',
+    shortNote: '3D Glass-Shattering Physics & Dimension Warp Arcade',
+    url: 'https://smashhit.mytechflowlabs.com/',
+    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
+    description: 'Hypnotic 3D physics arcade experience smashing through crystalline glass obstacles, temporal warp tunnels, and rhythmic destruction.',
+    category: '3D Games & Arcade'
   }
 ];
 
 const SKILLS = [
   {
-    title: 'Frontend Development',
-    desc: 'React, Next.js, HTML5, CSS3, Tailwind CSS, JavaScript, TypeScript, and responsive UI design.'
+    title: 'Frontend & 3D Web Development',
+    desc: 'React 19, Three.js, WebGL shaders, Tailwind CSS, JavaScript ES2024, TypeScript, and responsive UI design.'
   },
   {
     title: 'Backend & APIs',
-    desc: 'Node.js, Express, RESTful APIs, serverless functions, authentication, and webhooks.'
+    desc: 'Node.js, Express, RESTful APIs, serverless functions, real-time WebSockets, authentication, and webhooks.'
   },
   {
     title: 'Database & Cloud Deployment',
-    desc: 'Supabase, PostgreSQL, Row-Level Security, Firebase, Vercel edge hosting, and GitHub CI/CD.'
+    desc: 'Supabase, PostgreSQL, Row-Level Security (RLS), Firebase, Vercel edge hosting, and GitHub Actions CI/CD.'
+  },
+  {
+    title: 'Cloud Native & DevOps',
+    desc: 'Docker multi-stage builds, Kubernetes (Deployments, Ingress, HPA), Nginx reverse proxy, and microservices.'
   },
   {
     title: 'Mobile & Utility Tools',
-    desc: 'Progressive Web Apps (PWAs), offline local storage, data analytics, and workflow utilities.'
+    desc: 'Progressive Web Apps (PWAs), offline local storage, data analytics, and workflow productivity suites.'
   }
 ];
 
 export default function App() {
   const [apps, setApps] = useState(() => {
-    const saved = localStorage.getItem('mytechflow_apps_clean');
+    const saved = localStorage.getItem('mytechflow_apps_v2');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length >= INITIAL_APPS.length) {
+          return parsed;
+        }
       } catch (e) {
-        return INITIAL_APPS;
+        // fallback
       }
     }
     return INITIAL_APPS;
@@ -75,6 +122,7 @@ export default function App() {
   });
 
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isAppModalOpen, setIsAppModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState(null);
@@ -85,6 +133,7 @@ export default function App() {
   const [formUrl, setFormUrl] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formCategory, setFormCategory] = useState('Productivity');
 
   // Login form fields
   const [loginEmail, setLoginEmail] = useState('');
@@ -93,18 +142,22 @@ export default function App() {
 
   // Save to localStorage
   useEffect(() => {
-    localStorage.setItem('mytechflow_apps_clean', JSON.stringify(apps));
+    localStorage.setItem('mytechflow_apps_v2', JSON.stringify(apps));
   }, [apps]);
 
   useEffect(() => {
     localStorage.setItem('mytechflow_admin_clean', isAdmin ? 'true' : 'false');
   }, [isAdmin]);
 
-  const filteredApps = apps.filter(app =>
-    app.name.toLowerCase().includes(search.toLowerCase()) ||
-    (app.shortNote && app.shortNote.toLowerCase().includes(search.toLowerCase())) ||
-    app.description.toLowerCase().includes(search.toLowerCase())
-  );
+  const categories = ['All', 'Education', 'Productivity', 'Finance', '3D Games & Arcade'];
+
+  const filteredApps = apps.filter(app => {
+    const matchesSearch = app.name.toLowerCase().includes(search.toLowerCase()) ||
+      (app.shortNote && app.shortNote.toLowerCase().includes(search.toLowerCase())) ||
+      app.description.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || (app.category && app.category === selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -135,6 +188,7 @@ export default function App() {
     setFormUrl('https://');
     setFormImageUrl('');
     setFormDescription('');
+    setFormCategory('Productivity');
     setIsAppModalOpen(true);
   };
 
@@ -145,6 +199,7 @@ export default function App() {
     setFormUrl(app.url);
     setFormImageUrl(app.imageUrl);
     setFormDescription(app.description);
+    setFormCategory(app.category || 'Productivity');
     setIsAppModalOpen(true);
   };
 
@@ -159,7 +214,8 @@ export default function App() {
         shortNote: formShortNote,
         url: formUrl,
         imageUrl: formImageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
-        description: formDescription
+        description: formDescription,
+        category: formCategory
       } : a));
     } else {
       const newApp = {
@@ -168,7 +224,8 @@ export default function App() {
         shortNote: formShortNote,
         url: formUrl,
         imageUrl: formImageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
-        description: formDescription
+        description: formDescription,
+        category: formCategory
       };
       setApps(prev => [newApp, ...prev]);
     }
@@ -179,6 +236,13 @@ export default function App() {
   const handleDeleteApp = (id) => {
     if (window.confirm('Delete this app from the dashboard?')) {
       setApps(prev => prev.filter(a => a.id !== id));
+    }
+  };
+
+  const handleResetDefaults = () => {
+    if (window.confirm('Reset applications list to default 8 deployed apps?')) {
+      setApps(INITIAL_APPS);
+      localStorage.setItem('mytechflow_apps_v2', JSON.stringify(INITIAL_APPS));
     }
   };
 
@@ -204,7 +268,7 @@ export default function App() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search apps..."
+              placeholder="Search apps (e.g. Runner, French, TimeLog, Dodge)..."
             />
           </div>
 
@@ -242,11 +306,11 @@ export default function App() {
         {/* Welcome Banner */}
         <div className="hero-banner">
           <div className="hero-text">
-            <h2>Welcome to MyTechFlow Labs</h2>
-            <p>Direct shortcuts to launch all our production web applications.</p>
+            <h2>Welcome to MyTechFlow Labs Portal</h2>
+            <p>Direct shortcuts & unified hub to launch all our live production web applications and 3D arcade games.</p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <a
               href={CONTACT_MAILTO}
               className="btn btn-gray"
@@ -255,11 +319,31 @@ export default function App() {
             </a>
 
             {isAdmin && (
-              <button onClick={handleOpenAddModal} className="btn btn-blue">
-                + Add New App
-              </button>
+              <>
+                <button onClick={handleOpenAddModal} className="btn btn-blue">
+                  + Add New App
+                </button>
+                <button onClick={handleResetDefaults} className="btn btn-gray btn-sm" title="Restore default apps">
+                  🔄 Restore Defaults
+                </button>
+              </>
             )}
           </div>
+        </div>
+
+        {/* Category Filters */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: '13px', color: '#94a3b8', marginRight: '4px', fontWeight: '600' }}>Category:</span>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`btn btn-sm ${selectedCategory === cat ? 'btn-blue' : 'btn-gray'}`}
+              style={{ borderRadius: '20px', padding: '4px 14px' }}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
 
         {/* Applications Section */}
@@ -282,12 +366,31 @@ export default function App() {
                   onClick={() => handleCardClick(app.url)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <img
-                    src={app.imageUrl}
-                    alt={app.name}
-                    className="card-img"
-                    loading="lazy"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <img
+                      src={app.imageUrl}
+                      alt={app.name}
+                      className="card-img"
+                      loading="lazy"
+                    />
+                    {app.category && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        backdropFilter: 'blur(6px)',
+                        color: '#60a5fa',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(59, 130, 246, 0.3)'
+                      }}>
+                        {app.category}
+                      </span>
+                    )}
+                  </div>
 
                   <div className="card-body">
                     <div>
@@ -315,7 +418,7 @@ export default function App() {
                         className="btn btn-blue btn-sm"
                         style={{ flex: 1 }}
                       >
-                        Open App ↗
+                        Launch App ↗
                       </a>
 
                       {isAdmin && (
@@ -342,8 +445,8 @@ export default function App() {
           ) : (
             <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#1e293b', borderRadius: '12px', marginBottom: '32px' }}>
               <p style={{ color: '#94a3b8' }}>No applications found matching "{search}".</p>
-              <button onClick={() => setSearch('')} className="btn btn-gray btn-sm" style={{ marginTop: '12px' }}>
-                Clear Search
+              <button onClick={() => { setSearch(''); setSelectedCategory('All'); }} className="btn btn-gray btn-sm" style={{ marginTop: '12px' }}>
+                Clear Filters
               </button>
             </div>
           )}
@@ -352,10 +455,10 @@ export default function App() {
         {/* Skills Section */}
         <div className="skills-box">
           <div className="section-title" style={{ marginBottom: '8px' }}>
-            <span>Skills & Capabilities</span>
+            <span>Skills & Engineering Capabilities</span>
           </div>
           <p style={{ color: '#94a3b8', fontSize: '13px' }}>
-            Core full-stack engineering expertise across web technologies:
+            Full-stack engineering, 3D WebGL graphics, and Cloud Native DevOps:
           </p>
 
           <div className="skills-grid">
@@ -448,7 +551,7 @@ export default function App() {
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. French Learner App"
+                  placeholder="e.g. Lost Frontier 3D Runner"
                   required
                 />
               </div>
@@ -459,7 +562,7 @@ export default function App() {
                   type="text"
                   value={formShortNote}
                   onChange={(e) => setFormShortNote(e.target.value)}
-                  placeholder="e.g. AI Vocab & Grammar Practice for French Readers"
+                  placeholder="e.g. 3D Sci-Fi Endless Arcade Runner"
                 />
               </div>
 
@@ -469,9 +572,31 @@ export default function App() {
                   type="url"
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
-                  placeholder="https://french.mytechflowlabs.com/"
+                  placeholder="https://lostrun.mytechflowlabs.com/"
                   required
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontSize: '13px'
+                  }}
+                >
+                  <option value="Education">Education</option>
+                  <option value="Productivity">Productivity</option>
+                  <option value="Finance">Finance</option>
+                  <option value="3D Games & Arcade">3D Games & Arcade</option>
+                </select>
               </div>
 
               <div className="form-group">

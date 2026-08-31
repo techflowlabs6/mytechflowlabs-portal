@@ -1,91 +1,142 @@
-# ⚡ MyTechFlow Labs (mytechflowlabs.com)
+# ⚡ MyTechFlow Labs Portal (`mytechflowlabs.com`)
 
-An ultra-modern, high-performance 3D homepage and applications launcher hub for **MyTechFlow Labs**. Built with React, Three.js, WebGL shaders, Lucide Icons, and Supabase PostgreSQL with Row-Level Security (RLS).
+An ultra-modern, high-performance central applications launcher and developer dashboard for **MyTechFlow Labs**. Built with React 19, Vite, Three.js WebGL graphics, Tailwind CSS, Supabase PostgreSQL, and Cloud Native DevOps (Docker + Kubernetes).
 
 ---
 
-## 🚀 Live Features
+## 🌐 Live Deployed Applications Matrix
 
-1. **Interactive 3D WebGL Hero**:
-   - High-performance Three.js particle core, orbital torus rings, and responsive mouse/touch coordinate physics at 60 FPS.
-   - 3D Tilt perspective cards with dynamic holographic specular glare reflections.
+All production applications deployed across custom subdomains under `mytechflowlabs.com` backed by high-availability edge nodes:
 
-2. **Apps Ecosystem & Dashboard**:
-   - Shortcuts & interactive launchers for your core applications:
-     - 📘 **French Learner AI** (`https://french-learner.mytechflowlabs.com`)
-     - ⏱️ **TimeLog Pro** (`https://timelog.mytechflowlabs.com`)
-     - 🎓 **TCF Preparation Suite** (`https://tcf.mytechflowlabs.com`)
-     - 💵 **Driver Earnings Tracker** (`https://driver-earnings.mytechflowlabs.com`)
-     - 🤖 **TechFlow AI Studio** (`https://ai.mytechflowlabs.com`)
-     - 📊 **CloudOps Monitor** (`https://cloudops.mytechflowlabs.com`)
-   - Instant search with keyboard hotkey `/`, category filters (Education, Productivity, Finance, AI, DevOps), and 3D Card / List view switcher.
+| Subdomain Domain | CNAME Edge Target | Application Name | Category | Primary Stack |
+| :--- | :--- | :--- | :--- | :--- |
+| [`french.mytechflowlabs.com`](https://french.mytechflowlabs.com) | `francais-decode-git-main-techflow2.vercel.app` | **French Learner App / Français Décode** | Education | React, Speech AI, Audio Decks |
+| [`timelog.mytechflowlabs.com`](https://timelog.mytechflowlabs.com) | `time-log-mocha.vercel.app` | **TimeLog Pro** | Productivity | React, Chart.js, Pomodoro, Supabase |
+| [`tcf.mytechflowlabs.com`](https://tcf.mytechflowlabs.com) | `french-grammar-mastery.vercel.app` | **TCF Preparation Suite** | Education | React, Timed Exam Engine, Audio |
+| [`driver.mytechflowlabs.com`](https://driver.mytechflowlabs.com) | `driver-earnings-tracker.vercel.app` | **Driver Earnings Tracker** | Finance | React, PWA, Financial Analytics |
+| [`lostrun.mytechflowlabs.com`](https://lostrun.mytechflowlabs.com) | `run-lost-frontier.vercel.app` | **Lost Frontier 3D Runner** | 3D Games & Arcade | Three.js, WebGL, Procedural World |
+| [`neon.mytechflowlabs.com`](https://neon.mytechflowlabs.com) | `neon-dodge-rush.vercel.app` | **Neon Dodge Rush** | 3D Games & Arcade | HTML5 Canvas, Synthwave, Particles |
+| [`reflex.mytechflowlabs.com`](https://reflex.mytechflowlabs.com) | `reflex-rush-jfl4.vercel.app` | **Reflex Rush** | 3D Games & Arcade | Microsecond Timers, Analytics |
+| [`smashhit.mytechflowlabs.com`](https://smashhit.mytechflowlabs.com) | `smashhit.vercel.app` | **Smash Hit 3D** | 3D Games & Arcade | Three.js, Voronoi Physics, Spatial Audio |
+| [`www.mytechflowlabs.com`](https://www.mytechflowlabs.com) | `mytechflowlabs-portal-roan.vercel.app` | **MyTechFlow Labs Central Portal** | Main Hub | React 19, Vite, Docker, K8s |
 
-3. **SuperAdmin Management Portal (`nrkb1998@gmail.com`)**:
-   - Secure login via Supabase Auth or Quick Admin Access for `nrkb1998@gmail.com`.
-   - Full CRUD capabilities:
-     - **Add New App**: Configure app address URL, title, description, category, tags, screenshot presets, and key features.
-     - **Edit Existing Apps**: Update details, change status (Live/Beta/In Dev), or toggle featured pin.
+---
+
+## 🚀 Core Features
+
+1. **Interactive Applications Hub**:
+   - One-click shortcuts to launch all 8 live production applications.
+   - Real-time search by keywords (e.g., *Runner*, *French*, *TimeLog*, *Dodge*, *Driver*).
+   - Category filtering (*Education*, *Productivity*, *Finance*, *3D Games & Arcade*).
+   - Responsive dark-mode card grid with smooth hover transitions and category badges.
+
+2. **Direct Inquiries & Support**:
+   - One-click direct email launcher connected to `techflowlabs6@gmail.com`.
+
+3. **SuperAdmin Management Portal**:
+   - Secure admin authentication for `techflowlabs6@gmail.com`.
+   - Full CRUD capability:
+     - **Add New App**: Configure app address URL, title, short note, description, category, and screenshot image.
+     - **Edit Existing Apps**: Update app URLs, descriptions, or categories in real-time.
      - **Delete Apps**: Delete with safety confirmation dialog.
-   - Public visitors receive a sleek, read-only experience.
+     - **Restore Defaults**: One-click restore to the canonical 8 production apps.
 
-4. **Skills & Engineering Matrix**:
-   - Interactive domain tabs (Frontend & 3D Web, Backend & Cloud, AI & Automation, Mobile & PWA) with animated mastery gauges.
-
-5. **Work Showcase Gallery**:
-   - Fullscreen modal lightbox to inspect real UI screenshots, metrics, and workflow captures.
+4. **Cloud Native DevOps & Containerization**:
+   - Multi-stage production `Dockerfile` with Node 22 builder and Nginx Alpine SPA web server.
+   - `docker-compose.yml` for local container testing.
+   - Full Kubernetes manifests (`k8s/deployment.yaml`, `service.yaml`, `ingress.yaml`, `configmap.yaml`, `hpa.yaml`, `kustomization.yaml`).
 
 ---
 
-## 🛠️ Local Development
+## 🛠️ Quickstart & Local Development
 
 ### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Run Local Development Server
+### 2. Start Vite Development Server
 ```bash
 npm run dev
 ```
+Open `http://localhost:5173` in your browser.
 
-### 3. Build for Production
+### 3. Build Production Bundle
 ```bash
 npm run build
 ```
+Compiled static assets are generated in `dist/`.
 
 ---
 
-## 🗄️ Supabase Setup (Optional but Recommended)
+## 🐳 Docker Deployment
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. Go to the **SQL Editor** in Supabase and run the script located at `supabase/schema.sql`.
-3. Copy your project URL and anon public key into `.env`:
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_ADMIN_EMAIL=nrkb1998@gmail.com
-```
-*Note: If no Supabase credentials are provided, the app automatically runs seamlessly using resilient LocalStorage fallback with pre-seeded data.*
-
----
-
-## 🌐 Deployment to Vercel & GitHub
-
-### Deploy to GitHub:
+### Build & Run Container
 ```bash
-git init
-git add .
-git commit -m "feat: initial release of MyTechFlow Labs 3D portal"
-git branch -M main
-git remote add origin https://github.com/your-username/mytechflowlabs.git
-git push -u origin main
-```
+# Build the Docker image
+docker build -t mytechflowlabs-portal:latest .
 
-### Deploy to Vercel:
-1. Import your GitHub repository on [Vercel](https://vercel.com).
-2. In the Environment Variables section, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (if using Supabase).
-3. Click **Deploy**. Vercel will automatically configure routing via `vercel.json`.
+# Run container on port 8080
+docker run -d -p 8080:80 --name mytechflowlabs-portal mytechflowlabs-portal:latest
+```
+Access the application at `http://localhost:8080`.
+
+### Using Docker Compose
+```bash
+# Start container with health checks
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Stop container
+docker compose down
+```
 
 ---
 
-© 2026 MyTechFlow Labs. Designed & Engineered by Naveen Reddy (`nrkb1998@gmail.com`).
+## ☸️ Kubernetes (K8s) Cluster Deployment
+
+Deploy the portal to your Kubernetes cluster with automated TLS and horizontal pod autoscaling:
+
+```bash
+# Apply all Kubernetes manifests via Kustomize
+kubectl apply -k k8s/
+
+# Or apply individual manifests
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/hpa.yaml
+
+# Verify pod rollout status
+kubectl rollout status deployment/mytechflowlabs-portal
+
+# Check horizontal pod autoscaler
+kubectl get hpa mytechflowlabs-portal-hpa
+```
+
+---
+
+## 🌐 Vercel Edge Deployment
+
+1. Push your repository changes to GitHub:
+   ```bash
+   git add .
+   git commit -m "feat: update portal with 8 deployed apps and devops manifests"
+   git push origin main
+   ```
+2. In the [Vercel Dashboard](https://vercel.com), verify your project is connected to `mytechflowlabs-portal`.
+3. Vercel automatically deploys the updated bundle with custom domain routing configured in `vercel.json`.
+
+---
+
+## 📄 Documentation Links
+
+- 📘 [Developer Guide (`DEV_GUIDE.md`)](DEV_GUIDE.md) - Architecture, components, and state management.
+- 🚀 [Deployment Playbook (`DEPLOYMENT.md`)](DEPLOYMENT.md) - DNS configuration, SSL, Docker, and Kubernetes deployment.
+
+---
+
+© 2026 MyTechFlow Labs (`mytechflowlabs.com`). Maintained by TechFlow Labs (`techflowlabs6@gmail.com`).
