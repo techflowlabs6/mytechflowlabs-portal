@@ -15,7 +15,25 @@
   --muted: #636d63;
   --line: #e2e6dd;
   --paper: #fafbf7;
+  --surface: #ffffff;
+  --surface-2: #edf0e8;
+  --field: #ffffff;
+  --hover: #edf0e7;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Dark mode: the same Citrus & Ink brand, on a deep green-black canvas.
+   Applied by setting data-theme="dark" on <html> (see src/lib/theme.js). */
+:root[data-theme="dark"] {
+  color: #eef4ea;
+  background: #0e1512;
+  --ink: #eef4ea;
+  --muted: #a7b3a4;
+  --line: #2a3a2f;
+  --paper: #121a15;
+  --surface: #182420;
+  --surface-2: #1e2d25;
+  --field: #0f1712;
+  --hover: #223129;
 }
 * {
   box-sizing: border-box;

@@ -3,6 +3,8 @@ import { INITIAL_APPS } from "../data/portalApps.js";
 export const APPS_KEY = "mytechflow_apps_v2";
 export const ADMIN_KEY = "mytechflow_admin_clean";
 export const MIGRATION_KEY = "mytechflow_citrus_v1";
+export const APPS_SAVED_AT_KEY = "mytechflow_apps_saved_at";
+export const PUBLISH_TOKEN_KEY = "mytechflow_publish_token";
 export const CATEGORIES = [
   "All",
   "Education",
@@ -18,6 +20,58 @@ export function safeWebUrl(value) {
   } catch {
     return "";
   }
+}
+
+/**
+ * Images may come from three safe places:
+ *  - an https/http URL (Unsplash or any host),
+ *  - a site-relative path such as /art/uploads/<id>.jpg (GitHub-committed uploads),
+ *  - a data:image/* URL produced by the in-browser upload compressor.
+ * Everything else (javascript:, data:text/html, file:, …) is rejected.
+ */
+export function safeImageUrl(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^data:image\/(png|jpe?g|webp|gif|avif);base64,[A-Za-z0-9+/=]+$/.test(trimmed))
+    return trimmed;
+  if (trimmed.startsWith("/art/") && !trimmed.includes(".."))
+    return trimmed;
+  return safeWebUrl(trimmed);
+}
+
+export function readSavedAt(storage) {
+  try {
+    return storage?.getItem(APPS_SAVED_AT_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function writeSavedAt(storage, isoDate) {
+  try {
+    storage?.setItem(APPS_SAVED_AT_KEY, isoDate);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The committed public/apps.json shape: { version: 1, updatedAt, apps: [...] }. */
+export function appsJsonPayload(apps, updatedAt = new Date().toISOString()) {
+  return { version: 1, updatedAt, apps };
+}
+
+export function parseAppsJson(text) {
+  const parsed = JSON.parse(text);
+  const apps = Array.isArray(parsed) ? parsed : parsed?.apps;
+  if (!Array.isArray(apps)) throw new Error("apps.json has no apps array.");
+  const cleaned = hydrateApps(apps, true);
+  return {
+    updatedAt:
+      typeof parsed?.updatedAt === "string" ? parsed.updatedAt : "",
+    apps: cleaned,
+  };
 }
 
 export function isLexi(app) {

@@ -16,19 +16,37 @@ import {
   Trash2,
   CheckCircle2,
   Code2,
+  Sun,
+  Moon,
+  Upload,
+  Download,
 } from "lucide-react";
 import { INITIAL_APPS, SKILLS } from "./data/portalApps.js";
 import {
   ADMIN_KEY,
+  APPS_KEY,
   CATEGORIES,
+  PUBLISH_TOKEN_KEY,
+  appsJsonPayload,
   defaultArtwork,
   filterApps,
   isLexi,
+  parseAppsJson,
   readAdmin,
   readApps,
+  readSavedAt,
+  safeImageUrl,
   safeWebUrl,
   writeApps,
+  writeSavedAt,
 } from "./lib/portalState.js";
+import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
+import {
+  MAX_UPLOAD_BYTES,
+  compressImageFile,
+  dataUrlBytes,
+  validateImageFile,
+} from "./lib/imageUpload.js";
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
@@ -41,8 +59,43 @@ const storage = () => {
     return null;
   }
 };
+const session = () => {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+};
 const categoryLabel = (category) =>
   category === "3D Games & Arcade" ? "Arcade" : category;
+
+function ThemeToggle({ theme, onToggle }) {
+  const dark = theme === "dark";
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      role="switch"
+      aria-checked={dark}
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      title={dark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={onToggle}
+    >
+      <span className="theme-toggle-icons" aria-hidden="true">
+        <Sun size={15} />
+        <Moon size={15} />
+      </span>
+      <span className="theme-toggle-knob" aria-hidden="true">
+        {dark ? <Moon size={16} /> : <Sun size={16} />}
+      </span>
+      <span className="sr-only">
+        {dark
+          ? "Dark mode is on. Switch to light mode."
+          : "Light mode is on. Switch to dark mode."}
+      </span>
+    </button>
+  );
+}
 
 function Dialog({ title, onClose, children, className = "" }) {
   const dialogRef = useRef(null);
@@ -126,7 +179,7 @@ function AppArtwork({ app, artwork, onReady }) {
         />
       </svg>
     );
-  const imageUrl = safeWebUrl(app.imageUrl);
+  const imageUrl = safeImageUrl(app.imageUrl);
   return imageUrl ? (
     <img
       className="card-art"
@@ -148,7 +201,7 @@ function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
   const artwork = defaultArtwork(app);
   const light = artwork === 2 || artwork === 8;
   const url = safeWebUrl(app.url);
-  const hasArtwork = artwork !== null || Boolean(safeWebUrl(app.imageUrl));
+  const hasArtwork = artwork !== null || Boolean(safeImageUrl(app.imageUrl));
   return (
     <article
       className={`app-card ${light ? "app-card--light" : ""} ${isAdmin ? "app-card--admin" : ""} ${artReady || !hasArtwork ? "art-ready" : ""}`}
@@ -217,6 +270,13 @@ function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
 export default function App() {
   const [apps, setApps] = useState(() => readApps(storage()));
   const [isAdmin, setIsAdmin] = useState(() => readAdmin(storage()));
+  const [theme, setTheme] = useState(() =>
+    readTheme(
+      storage(),
+      typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-color-scheme: dark)").matches,
+    ),
+  );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -228,13 +288,70 @@ export default function App() {
   const [storageFailed, setStorageFailed] = useState(false);
   const [offline, setOffline] = useState(() => !navigator.onLine);
   const [reconnected, setReconnected] = useState(false);
+  const [syncStatus, setSyncStatus] = useState({ state: "idle", message: "" });
+  const [publishToken, setPublishToken] = useState(
+    () => session()?.getItem(PUBLISH_TOKEN_KEY) || "",
+  );
+  // Card-image form state: "upload" = pick a file from this device,
+  // "url" = paste an image link (Unsplash or any host).
+  const [imageSource, setImageSource] = useState("upload");
+  const [uploadPreview, setUploadPreview] = useState("");
+  const [uploadDataUrl, setUploadDataUrl] = useState("");
+  const [uploadFileName, setUploadFileName] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [urlField, setUrlField] = useState("");
   const headerRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const firstAppsWrite = useRef(true);
   const filtered = filterApps(apps, search, category);
   const isFiltered = Boolean(search.trim()) || category !== "All";
 
+  // Theme: apply to <html> and remember the choice on this device.
+  useEffect(() => {
+    applyTheme(theme);
+    writeTheme(storage(), theme);
+  }, [theme]);
+
+  // Permanent catalog: adopt the GitHub-committed public/apps.json when it
+  // is newer than this device's copy (or when this device has no copy yet).
+  // Local edits that were never published are never silently discarded:
+  // adoption only happens for a fresh device, or when the committed
+  // catalog is newer than the last local change.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/apps.json", { cache: "no-store" });
+        if (!response.ok || cancelled) return;
+        const { updatedAt, apps: committed } = parseAppsJson(
+          await response.text(),
+        );
+        if (cancelled) return;
+        const store = storage();
+        const hasLocal = store?.getItem(APPS_KEY) !== null;
+        const savedAt = readSavedAt(store);
+        if (!hasLocal || (savedAt && updatedAt && updatedAt > savedAt)) {
+          setApps(committed);
+          writeSavedAt(store, updatedAt || new Date().toISOString());
+        }
+      } catch {
+        /* Offline or pre-publish build: the bundled seed catalog stands. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     setStorageFailed(!writeApps(storage(), apps));
+    // Stamp the local-change time on every change after the first render,
+    // so the apps.json check above can tell a newer commit from a stale copy.
+    if (firstAppsWrite.current) {
+      firstAppsWrite.current = false;
+      return;
+    }
+    writeSavedAt(storage(), new Date().toISOString());
   }, [apps]);
   useEffect(() => {
     try {
@@ -298,6 +415,21 @@ export default function App() {
   const openEditor = (app = null) => {
     setEditingApp(app);
     setFormError("");
+    setUploadError("");
+    const existingImage = app?.imageUrl || "";
+    if (existingImage.startsWith("data:image/")) {
+      setImageSource("upload");
+      setUploadPreview(existingImage);
+      setUploadDataUrl(existingImage);
+      setUploadFileName("Current uploaded image");
+      setUrlField("");
+    } else {
+      setImageSource("upload");
+      setUploadPreview("");
+      setUploadDataUrl("");
+      setUploadFileName("");
+      setUrlField(existingImage);
+    }
     setModal("form");
   };
   const openDetails = (app) => {
@@ -316,13 +448,57 @@ export default function App() {
       closeModal();
     } else setLoginError("This email does not have admin access.");
   };
+  const handleImageFile = async (file) => {
+    const problem = validateImageFile(file);
+    if (problem) {
+      setUploadError(problem);
+      return;
+    }
+    setUploadError("");
+    try {
+      const dataUrl = await compressImageFile(file);
+      if (dataUrlBytes(dataUrl) > MAX_UPLOAD_BYTES) {
+        setUploadError(
+          "That image is still over 2 MB after resizing. Pick a smaller one.",
+        );
+        return;
+      }
+      setUploadDataUrl(dataUrl);
+      setUploadPreview(dataUrl);
+      setUploadFileName(file.name);
+    } catch {
+      setUploadError("Could not read that image. Try a JPG or PNG file.");
+    }
+  };
+  const localSavedNotice = () =>
+    setSyncStatus({
+      state: "local",
+      message:
+        "Saved on this device. Publish to GitHub below to make it permanent on every device.",
+    });
   const saveApp = (event) => {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
     const name = String(fields.get("name") || "").trim();
     const url = safeWebUrl(String(fields.get("url") || "").trim());
-    const imageUrl = String(fields.get("imageUrl") || "").trim();
-    if (!name || !url || (imageUrl && !safeWebUrl(imageUrl))) {
+    let imageUrl = "";
+    if (imageSource === "upload") {
+      imageUrl = uploadDataUrl;
+      if (imageUrl && dataUrlBytes(imageUrl) > MAX_UPLOAD_BYTES) {
+        setFormError("That uploaded image is over 2 MB. Pick a smaller one.");
+        return;
+      }
+    } else {
+      imageUrl = safeImageUrl(String(fields.get("imageUrl") || "").trim());
+      const rawImage = String(fields.get("imageUrl") || "").trim();
+      if (rawImage && !imageUrl) {
+        setFormError(
+          "That image address is not valid. Paste a full https image link, an /art/uploads path, or switch to Upload image.",
+        );
+        return;
+      }
+    }
+    if (!name || !url) {
       setFormError(
         "Enter an app name and a valid http or https address for each URL.",
       );
@@ -345,11 +521,14 @@ export default function App() {
       const lexi = next.find(isLexi);
       return lexi ? [lexi, ...next.filter((item) => item !== lexi)] : next;
     });
+    localSavedNotice();
     closeModal();
   };
   const deleteApp = (app) => {
-    if (window.confirm(`Delete ${app.name} from this dashboard?`))
+    if (window.confirm(`Delete ${app.name} from this dashboard?`)) {
       setApps((previous) => previous.filter((item) => item.id !== app.id));
+      localSavedNotice();
+    }
   };
   const restore = () => {
     if (
@@ -359,7 +538,80 @@ export default function App() {
     ) {
       setApps(INITIAL_APPS.map((app) => ({ ...app })));
       resetFilters();
+      localSavedNotice();
     }
+  };
+  /** Commit the current catalog (+ any uploaded images) to GitHub. */
+  const publishCatalog = async () => {
+    const token = publishToken.trim();
+    if (token) session()?.setItem(PUBLISH_TOKEN_KEY, token);
+    setSyncStatus({ state: "publishing", message: "Publishing to GitHub…" });
+    const images = apps
+      .filter((app) => String(app.imageUrl || "").startsWith("data:image/"))
+      .map((app) => ({ dataUrl: app.imageUrl, appId: app.id }));
+    try {
+      const response = await fetch("/api/publish-apps", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ apps, images }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (response.status === 401) {
+          setSyncStatus({
+            state: "needs-token",
+            message:
+              "That publish token was not accepted. Enter the ADMIN_PUBLISH_TOKEN from Vercel and try again.",
+          });
+        } else if (data.code === "publish_not_configured") {
+          setSyncStatus({ state: "local-only", message: data.error });
+        } else {
+          setSyncStatus({
+            state: "error",
+            message: data.error || "Publishing failed. Your cards are still saved on this device.",
+          });
+        }
+        return;
+      }
+      // Committed images live at /art/uploads/… now — point the local
+      // cards at those paths instead of the bulky data URLs.
+      if (data.imageUrls && Object.keys(data.imageUrls).length) {
+        setApps((previous) =>
+          previous.map((item) =>
+            data.imageUrls[item.id]
+              ? { ...item, imageUrl: data.imageUrls[item.id] }
+              : item,
+          ),
+        );
+      }
+      if (data.updatedAt) writeSavedAt(storage(), data.updatedAt);
+      setSyncStatus({
+        state: "published",
+        message:
+          "Published to GitHub. It appears on every device once the Vercel deploy finishes.",
+        commitUrl: data.commitUrl || "",
+      });
+    } catch {
+      setSyncStatus({
+        state: "error",
+        message:
+          "Could not reach the publish server. Your cards are still saved on this device — try again when you are back online.",
+      });
+    }
+  };
+  const downloadCatalog = () => {
+    const blob = new Blob(
+      [JSON.stringify(appsJsonPayload(apps), null, 2)],
+      { type: "application/json" },
+    );
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "apps.json";
+    link.click();
+    URL.revokeObjectURL(link.href);
   };
   const nav = (
     <>
@@ -416,6 +668,12 @@ export default function App() {
           <nav className="desktop-nav" aria-label="Main navigation">
             {nav}
           </nav>
+          <ThemeToggle
+            theme={theme}
+            onToggle={() =>
+              setTheme((value) => (value === "dark" ? "light" : "dark"))
+            }
+          />
           <button
             ref={menuButtonRef}
             className="icon-button menu-toggle"
@@ -543,6 +801,66 @@ export default function App() {
                   Restore defaults
                 </button>
               </div>
+            </div>
+          )}
+          {isAdmin && (
+            <div className="publish-toolbar">
+              <div className="publish-info">
+                <p>
+                  <strong>Make it permanent.</strong> Publish to commit these
+                  cards to GitHub — then they show on every device.
+                </p>
+                <label className="publish-token-field">
+                  <span className="sr-only">Publish token</span>
+                  <input
+                    type="password"
+                    value={publishToken}
+                    onChange={(event) => setPublishToken(event.target.value)}
+                    placeholder="Publish token (from Vercel)"
+                    autoComplete="off"
+                    aria-label="Publish token from Vercel"
+                  />
+                </label>
+              </div>
+              <div className="publish-actions">
+                <button
+                  className="button button--primary"
+                  onClick={publishCatalog}
+                  disabled={syncStatus.state === "publishing"}
+                >
+                  <Upload size={16} />
+                  {syncStatus.state === "publishing"
+                    ? "Publishing…"
+                    : "Publish to GitHub"}
+                </button>
+                <button
+                  className="button button--quiet"
+                  onClick={downloadCatalog}
+                >
+                  <Download size={16} />
+                  Download apps.json
+                </button>
+              </div>
+              {syncStatus.state !== "idle" && (
+                <p
+                  className={`sync-status sync-status--${syncStatus.state}`}
+                  role="status"
+                >
+                  {syncStatus.state === "published" && (
+                    <CheckCircle2 size={16} />
+                  )}
+                  <span>{syncStatus.message}</span>
+                  {syncStatus.commitUrl && (
+                    <a
+                      href={syncStatus.commitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View commit
+                    </a>
+                  )}
+                </p>
+              )}
             </div>
           )}
           {filtered.length ? (
@@ -727,14 +1045,103 @@ export default function App() {
               </select>
             </div>
             <div className="form-field">
-              <label htmlFor="form-image">Image web address</label>
-              <input
-                id="form-image"
-                name="imageUrl"
-                type="url"
-                defaultValue={editingApp?.imageUrl || ""}
-                placeholder="https://example.com/image.jpg"
-              />
+              <span className="form-label" id="image-source-label">
+                Card image
+              </span>
+              <div
+                className="image-source-switch"
+                role="group"
+                aria-labelledby="image-source-label"
+              >
+                <button
+                  type="button"
+                  className={`image-source-button ${imageSource === "upload" ? "is-active" : ""}`}
+                  aria-pressed={imageSource === "upload"}
+                  onClick={() => setImageSource("upload")}
+                >
+                  <Upload size={15} />
+                  Upload image
+                </button>
+                <button
+                  type="button"
+                  className={`image-source-button ${imageSource === "url" ? "is-active" : ""}`}
+                  aria-pressed={imageSource === "url"}
+                  onClick={() => setImageSource("url")}
+                >
+                  Image URL
+                </button>
+              </div>
+              {imageSource === "upload" ? (
+                <div className="image-upload">
+                  <label className="button button--quiet" htmlFor="form-image-file">
+                    <Upload size={16} />
+                    Choose an image…
+                  </label>
+                  <input
+                    id="form-image-file"
+                    className="sr-only"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      if (file) handleImageFile(file);
+                    }}
+                  />
+                  <p className="field-hint">
+                    JPG, PNG, WebP, GIF or AVIF, up to 8 MB. It is resized to
+                    1200px and saved into the repo when you publish — no
+                    Unsplash needed.
+                  </p>
+                  {uploadPreview && (
+                    <figure className="image-preview">
+                      <img src={uploadPreview} alt="Card image preview" />
+                      <figcaption>
+                        {uploadFileName}
+                        <button
+                          type="button"
+                          className="link-button"
+                          onClick={() => {
+                            setUploadPreview("");
+                            setUploadDataUrl("");
+                            setUploadFileName("");
+                          }}
+                        >
+                          Remove image
+                        </button>
+                      </figcaption>
+                    </figure>
+                  )}
+                  {uploadError && (
+                    <p className="form-error" role="alert">
+                      {uploadError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="image-upload">
+                  <label className="sr-only" htmlFor="form-image">
+                    Image web address
+                  </label>
+                  <input
+                    id="form-image"
+                    name="imageUrl"
+                    type="url"
+                    value={urlField}
+                    onChange={(event) => setUrlField(event.target.value)}
+                    placeholder="https://images.unsplash.com/photo-…"
+                  />
+                  <p className="field-hint">
+                    Unsplash works — paste any direct image link. Or switch
+                    back to Upload image to use your own file.
+                  </p>
+                  {safeImageUrl(urlField) && (
+                    <figure className="image-preview">
+                      <img src={safeImageUrl(urlField)} alt="Card image preview" />
+                      <figcaption>Preview</figcaption>
+                    </figure>
+                  )}
+                </div>
+              )}
             </div>
             <div className="form-field">
               <label htmlFor="form-description">Description</label>
