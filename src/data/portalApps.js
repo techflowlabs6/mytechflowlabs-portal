@@ -1,0 +1,125 @@
+export const INITIAL_APPS = [
+  {
+    id: "lexi-parcours",
+    name: "Lexi-Parcours",
+    shortNote: "French vocabulary, every day.",
+    url: "https://lexi.mytechflowlabs.com/",
+    imageUrl: "",
+    description:
+      "Build your French vocabulary with Lexi-Parcours: words, review, and everyday practice.",
+    category: "Education",
+  },
+  {
+    id: "1",
+    name: "French Learner App",
+    shortNote: "AI Grammar, Vocab & Pronunciation for French Readers",
+    url: "https://french.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=600&q=80",
+    description:
+      "AI-assisted French vocabulary, pronunciation audio, grammar rules, and interactive reading exercises for French learners.",
+    category: "Education",
+  },
+  {
+    id: "2",
+    name: "TimeLog Pro",
+    shortNote: "Internal Time Management & Billable Revenue Tracker",
+    url: "https://timelog.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Internal time log management tool, Pomodoro focus sessions, productivity tracking, and billable revenue analytics.",
+    category: "Productivity",
+  },
+  {
+    id: "3",
+    name: "TCF Preparation Suite",
+    shortNote: "Official Format Mock Tests & Canadian CLB Score Predictor",
+    url: "https://tcf.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Official format mock exam tests, listening & reading comprehension practice, and Canadian CLB score prediction.",
+    category: "Education",
+  },
+  {
+    id: "4",
+    name: "Driver Earnings Tracker",
+    shortNote:
+      "Rideshare Shift Profit, Fuel Deductions & Net Hourly Calculator",
+    url: "https://driver.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Rideshare shift money calculator, fuel expense logs, tax deductions, and net hourly profit analytics.",
+    category: "Finance",
+  },
+  {
+    id: "5",
+    name: "Lost Frontier 3D Runner",
+    shortNote:
+      "High-Speed 3D Sci-Fi Endless Arcade Runner with Procedural Worlds",
+    url: "https://lostrun.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80",
+    description:
+      "High-octane 3D endless runner featuring procedural terrain generation, obstacle dodging, cyber soundtrack, and real-time score leaderboards.",
+    category: "3D Games & Arcade",
+  },
+  {
+    id: "6",
+    name: "Neon Dodge Rush",
+    shortNote: "Fast-Paced Neon Grid Arcade Dodger & Bullet Hell Survival",
+    url: "https://neon.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Adrenaline-fueled retro neon grid arcade game with dynamic hazards, speed multipliers, particle effects, and high-score survival.",
+    category: "3D Games & Arcade",
+  },
+  {
+    id: "7",
+    name: "Reflex Rush",
+    shortNote: "Sub-Millisecond Reaction Speed & Reflex Training Arena",
+    url: "https://reflex.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Competitive reflex speed benchmark tool featuring visual stimulus tracking, reaction time analytics, and precision accuracy tests.",
+    category: "3D Games & Arcade",
+  },
+  {
+    id: "8",
+    name: "Smash Hit 3D",
+    shortNote: "3D Glass-Shattering Physics & Dimension Warp Arcade",
+    url: "https://smashhit.mytechflowlabs.com/",
+    imageUrl:
+      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
+    description:
+      "Hypnotic 3D physics arcade experience smashing through crystalline glass obstacles, temporal warp tunnels, and rhythmic destruction.",
+    category: "3D Games & Arcade",
+  },
+];
+
+export const SKILLS = [
+  {
+    title: "Frontend & 3D Web Development",
+    desc: "React 19, Three.js, WebGL shaders, Tailwind CSS, JavaScript ES2024, TypeScript, and responsive UI design.",
+  },
+  {
+    title: "Backend & APIs",
+    desc: "Node.js, Express, RESTful APIs, serverless functions, real-time WebSockets, authentication, and webhooks.",
+  },
+  {
+    title: "Database & Cloud Deployment",
+    desc: "Supabase, PostgreSQL, Row-Level Security (RLS), Firebase, Vercel edge hosting, and GitHub Actions CI/CD.",
+  },
+  {
+    title: "Cloud Native & DevOps",
+    desc: "Docker multi-stage builds, Kubernetes (Deployments, Ingress, HPA), Nginx reverse proxy, and microservices.",
+  },
+  {
+    title: "Mobile & Utility Tools",
+    desc: "Progressive Web Apps (PWAs), offline local storage, data analytics, and workflow productivity suites.",
+  },
+];

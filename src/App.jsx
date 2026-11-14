@@ -1,641 +1,797 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useId, useRef, useState } from "react";
+import {
+  ArrowUpRight,
+  Search,
+  X,
+  Menu,
+  Mail,
+  Zap,
+  Plus,
+  RotateCcw,
+  LogOut,
+  Info,
+  WifiOff,
+  ChevronDown,
+  Pencil,
+  Trash2,
+  CheckCircle2,
+  Code2,
+} from "lucide-react";
+import { INITIAL_APPS, SKILLS } from "./data/portalApps.js";
+import {
+  ADMIN_KEY,
+  CATEGORIES,
+  defaultArtwork,
+  filterApps,
+  isLexi,
+  readAdmin,
+  readApps,
+  safeWebUrl,
+  writeApps,
+} from "./lib/portalState.js";
+import "./App.css";
 
-const ADMIN_EMAIL = 'techflowlabs6@gmail.com';
-const CONTACT_MAILTO = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent('Inquiry via MyTechFlow Labs')}&body=${encodeURIComponent('Hi MyTechFlow Labs team,\n\nI am reaching out regarding...')}`;
-
-export const INITIAL_APPS = [
-  {
-    id: '1',
-    name: 'French Learner App',
-    shortNote: 'AI Grammar, Vocab & Pronunciation for French Readers',
-    url: 'https://french.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=600&q=80',
-    description: 'AI-assisted French vocabulary, pronunciation audio, grammar rules, and interactive reading exercises for French learners.',
-    category: 'Education'
-  },
-  {
-    id: '2',
-    name: 'TimeLog Pro',
-    shortNote: 'Internal Time Management & Billable Revenue Tracker',
-    url: 'https://timelog.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=600&q=80',
-    description: 'Internal time log management tool, Pomodoro focus sessions, productivity tracking, and billable revenue analytics.',
-    category: 'Productivity'
-  },
-  {
-    id: '3',
-    name: 'TCF Preparation Suite',
-    shortNote: 'Official Format Mock Tests & Canadian CLB Score Predictor',
-    url: 'https://tcf.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=600&q=80',
-    description: 'Official format mock exam tests, listening & reading comprehension practice, and Canadian CLB score prediction.',
-    category: 'Education'
-  },
-  {
-    id: '4',
-    name: 'Driver Earnings Tracker',
-    shortNote: 'Rideshare Shift Profit, Fuel Deductions & Net Hourly Calculator',
-    url: 'https://driver.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=600&q=80',
-    description: 'Rideshare shift money calculator, fuel expense logs, tax deductions, and net hourly profit analytics.',
-    category: 'Finance'
-  },
-  {
-    id: '5',
-    name: 'Lost Frontier 3D Runner',
-    shortNote: 'High-Speed 3D Sci-Fi Endless Arcade Runner with Procedural Worlds',
-    url: 'https://lostrun.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80',
-    description: 'High-octane 3D endless runner featuring procedural terrain generation, obstacle dodging, cyber soundtrack, and real-time score leaderboards.',
-    category: '3D Games & Arcade'
-  },
-  {
-    id: '6',
-    name: 'Neon Dodge Rush',
-    shortNote: 'Fast-Paced Neon Grid Arcade Dodger & Bullet Hell Survival',
-    url: 'https://neon.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80',
-    description: 'Adrenaline-fueled retro neon grid arcade game with dynamic hazards, speed multipliers, particle effects, and high-score survival.',
-    category: '3D Games & Arcade'
-  },
-  {
-    id: '7',
-    name: 'Reflex Rush',
-    shortNote: 'Sub-Millisecond Reaction Speed & Reflex Training Arena',
-    url: 'https://reflex.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
-    description: 'Competitive reflex speed benchmark tool featuring visual stimulus tracking, reaction time analytics, and precision accuracy tests.',
-    category: '3D Games & Arcade'
-  },
-  {
-    id: '8',
-    name: 'Smash Hit 3D',
-    shortNote: '3D Glass-Shattering Physics & Dimension Warp Arcade',
-    url: 'https://smashhit.mytechflowlabs.com/',
-    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
-    description: 'Hypnotic 3D physics arcade experience smashing through crystalline glass obstacles, temporal warp tunnels, and rhythmic destruction.',
-    category: '3D Games & Arcade'
+export { INITIAL_APPS } from "./data/portalApps.js";
+const ADMIN_EMAIL = "techflowlabs6@gmail.com";
+const CONTACT_MAILTO = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent("Inquiry via MyTechFlow Labs")}&body=${encodeURIComponent("Hi MyTechFlow Labs team,\n\nI am reaching out regarding...")}`;
+const storage = () => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
   }
-];
+};
+const categoryLabel = (category) =>
+  category === "3D Games & Arcade" ? "Arcade" : category;
 
-const SKILLS = [
-  {
-    title: 'Frontend & 3D Web Development',
-    desc: 'React 19, Three.js, WebGL shaders, Tailwind CSS, JavaScript ES2024, TypeScript, and responsive UI design.'
-  },
-  {
-    title: 'Backend & APIs',
-    desc: 'Node.js, Express, RESTful APIs, serverless functions, real-time WebSockets, authentication, and webhooks.'
-  },
-  {
-    title: 'Database & Cloud Deployment',
-    desc: 'Supabase, PostgreSQL, Row-Level Security (RLS), Firebase, Vercel edge hosting, and GitHub Actions CI/CD.'
-  },
-  {
-    title: 'Cloud Native & DevOps',
-    desc: 'Docker multi-stage builds, Kubernetes (Deployments, Ingress, HPA), Nginx reverse proxy, and microservices.'
-  },
-  {
-    title: 'Mobile & Utility Tools',
-    desc: 'Progressive Web Apps (PWAs), offline local storage, data analytics, and workflow productivity suites.'
-  }
-];
+function Dialog({ title, onClose, children, className = "" }) {
+  const dialogRef = useRef(null);
+  const titleId = useId();
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const overflow = document.body.style.overflow;
+    const previousFocus = document.activeElement;
+    dialog.showModal();
+    dialog.querySelector("input, textarea, select")?.focus();
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = overflow;
+      queueMicrotask(() => {
+        const fallback = [
+          ...document.querySelectorAll(".menu-toggle, .brand"),
+        ].find((element) => element.getClientRects().length > 0);
+        const target =
+          previousFocus?.isConnected && previousFocus !== document.body
+            ? previousFocus
+            : fallback;
+        target?.focus({ preventScroll: true });
+      });
+    };
+  }, []);
+  return (
+    <dialog
+      ref={dialogRef}
+      className={`dialog ${className}`}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < rect.left ||
+          event.clientX > rect.right ||
+          event.clientY < rect.top ||
+          event.clientY > rect.bottom
+        )
+          onClose();
+      }}
+    >
+      <div className="dialog-header">
+        <h2 id={titleId}>{title}</h2>
+        <button
+          className="icon-button"
+          onClick={onClose}
+          aria-label="Close dialog"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      {children}
+    </dialog>
+  );
+}
+
+function AppArtwork({ app, artwork, onReady }) {
+  if (artwork !== null)
+    return (
+      <svg
+        className="card-art"
+        viewBox={`${artwork % 3} ${Math.floor(artwork / 3)} 1 1`}
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <image
+          href="/art/apps-atlas.webp"
+          x="0"
+          y="0"
+          width="3"
+          height="3"
+          onLoad={onReady}
+          onError={onReady}
+        />
+      </svg>
+    );
+  const imageUrl = safeWebUrl(app.imageUrl);
+  return imageUrl ? (
+    <img
+      className="card-art"
+      src={imageUrl}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      onLoad={onReady}
+      onError={(event) => {
+        event.currentTarget.style.opacity = "0";
+        onReady();
+      }}
+    />
+  ) : null;
+}
+
+function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
+  const [artReady, setArtReady] = useState(false);
+  const artwork = defaultArtwork(app);
+  const light = artwork === 2 || artwork === 8;
+  const url = safeWebUrl(app.url);
+  const hasArtwork = artwork !== null || Boolean(safeWebUrl(app.imageUrl));
+  return (
+    <article
+      className={`app-card ${light ? "app-card--light" : ""} ${isAdmin ? "app-card--admin" : ""} ${artReady || !hasArtwork ? "art-ready" : ""}`}
+      style={{ "--card-delay": `${Math.min(index, 8) * 35}ms` }}
+    >
+      <AppArtwork
+        app={app}
+        artwork={artwork}
+        onReady={() => setArtReady(true)}
+      />
+      <div className="card-shade" />
+      <a
+        className="app-link"
+        href={url || undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-disabled={!url || undefined}
+        aria-label={`Launch ${app.name} (opens in a new tab)`}
+        tabIndex={url ? 0 : -1}
+      >
+        <div className="card-heading">
+          <span className="eyebrow">{categoryLabel(app.category)}</span>
+          {isLexi(app) && <span className="new-label">New</span>}
+        </div>
+        <h3>{app.name}</h3>
+        {app.shortNote && <p className="card-note">{app.shortNote}</p>}
+        <span className="launch-button">
+          {url ? "Launch app" : "Link unavailable"}
+          <ArrowUpRight size={16} aria-hidden="true" />
+        </span>
+      </a>
+      <div className="card-tools">
+        <button
+          className="card-tool"
+          onClick={() => onDetails(app)}
+          aria-label={`About ${app.name}`}
+          title="App details"
+        >
+          <Info size={17} />
+        </button>
+        {isAdmin && (
+          <>
+            <button
+              className="card-tool"
+              onClick={() => onEdit(app)}
+              aria-label={`Edit ${app.name}`}
+              title="Edit app"
+            >
+              <Pencil size={16} />
+            </button>
+            <button
+              className="card-tool"
+              onClick={() => onDelete(app)}
+              aria-label={`Delete ${app.name}`}
+              title="Delete app"
+            >
+              <Trash2 size={16} />
+            </button>
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
 
 export default function App() {
-  const [apps, setApps] = useState(() => {
-    const saved = localStorage.getItem('mytechflow_apps_v2');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= INITIAL_APPS.length) {
-          return parsed;
-        }
-      } catch (e) {
-        // fallback
-      }
-    }
-    return INITIAL_APPS;
-  });
-
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('mytechflow_admin_clean') === 'true';
-  });
-
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isAppModalOpen, setIsAppModalOpen] = useState(false);
+  const [apps, setApps] = useState(() => readApps(storage()));
+  const [isAdmin, setIsAdmin] = useState(() => readAdmin(storage()));
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [modal, setModal] = useState(null);
   const [editingApp, setEditingApp] = useState(null);
+  const [detailApp, setDetailApp] = useState(null);
+  const [formError, setFormError] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [storageFailed, setStorageFailed] = useState(false);
+  const [offline, setOffline] = useState(() => !navigator.onLine);
+  const [reconnected, setReconnected] = useState(false);
+  const headerRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  const filtered = filterApps(apps, search, category);
+  const isFiltered = Boolean(search.trim()) || category !== "All";
 
-  // App form fields
-  const [formName, setFormName] = useState('');
-  const [formShortNote, setFormShortNote] = useState('');
-  const [formUrl, setFormUrl] = useState('');
-  const [formImageUrl, setFormImageUrl] = useState('');
-  const [formDescription, setFormDescription] = useState('');
-  const [formCategory, setFormCategory] = useState('Productivity');
-
-  // Login form fields
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-
-  // Save to localStorage
   useEffect(() => {
-    localStorage.setItem('mytechflow_apps_v2', JSON.stringify(apps));
+    setStorageFailed(!writeApps(storage(), apps));
   }, [apps]);
-
   useEffect(() => {
-    localStorage.setItem('mytechflow_admin_clean', isAdmin ? 'true' : 'false');
+    try {
+      storage()?.setItem(ADMIN_KEY, isAdmin ? "true" : "false");
+    } catch {
+      /* Storage may be unavailable in private browsing. */
+    }
   }, [isAdmin]);
+  useEffect(() => {
+    let timeout;
+    const onOffline = () => {
+      setOffline(true);
+      setReconnected(false);
+      clearTimeout(timeout);
+    };
+    const onOnline = () => {
+      setOffline(false);
+      setReconnected(true);
+      clearTimeout(timeout);
+      timeout = setTimeout(() => setReconnected(false), 3500);
+    };
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event) => {
+      if (event.type === "keydown" && event.key === "Escape") {
+        setMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+      if (
+        event.type === "pointerdown" &&
+        !headerRef.current?.contains(event.target)
+      )
+        setMenuOpen(false);
+    };
+    document.addEventListener("keydown", close);
+    document.addEventListener("pointerdown", close);
+    return () => {
+      document.removeEventListener("keydown", close);
+      document.removeEventListener("pointerdown", close);
+    };
+  }, [menuOpen]);
 
-  const categories = ['All', 'Education', 'Productivity', 'Finance', '3D Games & Arcade'];
-
-  const filteredApps = apps.filter(app => {
-    const matchesSearch = app.name.toLowerCase().includes(search.toLowerCase()) ||
-      (app.shortNote && app.shortNote.toLowerCase().includes(search.toLowerCase())) ||
-      app.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || (app.category && app.category === selectedCategory);
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (loginEmail.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-      setIsAdmin(true);
-      setIsLoginModalOpen(false);
-      setLoginError('');
-      setLoginEmail('');
-      setLoginPassword('');
-    } else {
-      setLoginError(`Access restricted. Only ${ADMIN_EMAIL} can log in as admin.`);
-    }
+  const closeModal = () => {
+    setModal(null);
+    setFormError("");
+    setLoginError("");
   };
-
-  const handleQuickLogin = () => {
-    setIsAdmin(true);
-    setIsLoginModalOpen(false);
+  const openLogin = () => {
+    setMenuOpen(false);
+    setLoginError("");
+    setModal("login");
   };
-
-  const handleLogout = () => {
-    setIsAdmin(false);
-  };
-
-  const handleOpenAddModal = () => {
-    setEditingApp(null);
-    setFormName('');
-    setFormShortNote('');
-    setFormUrl('https://');
-    setFormImageUrl('');
-    setFormDescription('');
-    setFormCategory('Productivity');
-    setIsAppModalOpen(true);
-  };
-
-  const handleOpenEditModal = (app) => {
+  const openEditor = (app = null) => {
     setEditingApp(app);
-    setFormName(app.name);
-    setFormShortNote(app.shortNote || '');
-    setFormUrl(app.url);
-    setFormImageUrl(app.imageUrl);
-    setFormDescription(app.description);
-    setFormCategory(app.category || 'Productivity');
-    setIsAppModalOpen(true);
+    setFormError("");
+    setModal("form");
   };
-
-  const handleSaveApp = (e) => {
-    e.preventDefault();
-    if (!formName.trim()) return;
-
-    if (editingApp) {
-      setApps(prev => prev.map(a => a.id === editingApp.id ? {
-        ...a,
-        name: formName,
-        shortNote: formShortNote,
-        url: formUrl,
-        imageUrl: formImageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
-        description: formDescription,
-        category: formCategory
-      } : a));
-    } else {
-      const newApp = {
-        id: Date.now().toString(),
-        name: formName,
-        shortNote: formShortNote,
-        url: formUrl,
-        imageUrl: formImageUrl || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
-        description: formDescription,
-        category: formCategory
-      };
-      setApps(prev => [newApp, ...prev]);
+  const openDetails = (app) => {
+    setDetailApp(app);
+    setModal("details");
+  };
+  const resetFilters = () => {
+    setSearch("");
+    setCategory("All");
+  };
+  const handleLogin = (event) => {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    if (String(fields.get("email")).trim().toLowerCase() === ADMIN_EMAIL) {
+      setIsAdmin(true);
+      closeModal();
+    } else setLoginError("This email does not have admin access.");
+  };
+  const saveApp = (event) => {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    const name = String(fields.get("name") || "").trim();
+    const url = safeWebUrl(String(fields.get("url") || "").trim());
+    const imageUrl = String(fields.get("imageUrl") || "").trim();
+    if (!name || !url || (imageUrl && !safeWebUrl(imageUrl))) {
+      setFormError(
+        "Enter an app name and a valid http or https address for each URL.",
+      );
+      return;
     }
-
-    setIsAppModalOpen(false);
+    const app = {
+      ...(editingApp || {}),
+      id: editingApp?.id || crypto.randomUUID(),
+      name,
+      url,
+      imageUrl,
+      shortNote: String(fields.get("shortNote") || "").trim(),
+      description: String(fields.get("description") || "").trim(),
+      category: String(fields.get("category")),
+    };
+    setApps((previous) => {
+      const next = editingApp
+        ? previous.map((item) => (item.id === editingApp.id ? app : item))
+        : [app, ...previous];
+      const lexi = next.find(isLexi);
+      return lexi ? [lexi, ...next.filter((item) => item !== lexi)] : next;
+    });
+    closeModal();
   };
-
-  const handleDeleteApp = (id) => {
-    if (window.confirm('Delete this app from the dashboard?')) {
-      setApps(prev => prev.filter(a => a.id !== id));
+  const deleteApp = (app) => {
+    if (window.confirm(`Delete ${app.name} from this dashboard?`))
+      setApps((previous) => previous.filter((item) => item.id !== app.id));
+  };
+  const restore = () => {
+    if (
+      window.confirm(
+        "Restore the 9 default apps? This replaces the app cards saved on this device.",
+      )
+    ) {
+      setApps(INITIAL_APPS.map((app) => ({ ...app })));
+      resetFilters();
     }
   };
-
-  const handleResetDefaults = () => {
-    if (window.confirm('Reset applications list to default 8 deployed apps?')) {
-      setApps(INITIAL_APPS);
-      localStorage.setItem('mytechflow_apps_v2', JSON.stringify(INITIAL_APPS));
-    }
-  };
-
-  const handleCardClick = (url) => {
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  };
+  const nav = (
+    <>
+      <a
+        href="#apps"
+        className="nav-link nav-link--active"
+        aria-current="page"
+        onClick={() => setMenuOpen(false)}
+      >
+        Apps
+      </a>
+      <a
+        href={CONTACT_MAILTO}
+        className="nav-link"
+        onClick={() => setMenuOpen(false)}
+      >
+        Contact
+        <Mail size={15} aria-hidden="true" />
+      </a>
+      {isAdmin ? (
+        <button
+          className="nav-link"
+          onClick={() => {
+            setIsAdmin(false);
+            setMenuOpen(false);
+          }}
+        >
+          Log out
+          <LogOut size={16} aria-hidden="true" />
+        </button>
+      ) : (
+        <button className="nav-link" onClick={openLogin}>
+          Admin
+        </button>
+      )}
+    </>
+  );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-      
-      {/* Header */}
-      <header>
-        <div className="container header-content">
-          <a href="#" className="logo">
-            <span>⚡</span> MyTechFlow<span>Labs</span>
+    <div className="portal">
+      <a className="skip-link" href="#apps">
+        Skip to apps
+      </a>
+      <header className="site-header" ref={headerRef}>
+        <div className="container header-inner">
+          <a className="brand" href="#top" aria-label="MyTechFlow Labs home">
+            <span className="brand-mark">
+              <Zap size={22} fill="currentColor" strokeWidth={1.5} />
+            </span>
+            <span>
+              MyTechFlow <span className="brand-labs">Labs</span>
+            </span>
           </a>
-
-          <div className="search-box">
-            <input
-              id="searchInput"
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search apps (e.g. Runner, French, TimeLog, Dodge)..."
-            />
+          <nav className="desktop-nav" aria-label="Main navigation">
+            {nav}
+          </nav>
+          <button
+            ref={menuButtonRef}
+            className="icon-button menu-toggle"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            {menuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+        {menuOpen && (
+          <nav
+            id="mobile-nav"
+            className="mobile-nav"
+            aria-label="Mobile navigation"
+          >
+            {nav}
+          </nav>
+        )}
+      </header>
+      <main id="top">
+        <section className="welcome" aria-labelledby="welcome-title">
+          <div className="container welcome-inner">
+            <div>
+              <h1 id="welcome-title">Your apps. One place.</h1>
+              <p>Learn, focus, track and play.</p>
+            </div>
+            <span className="welcome-label">
+              <span />
+              Built by MyTechFlow Labs
+            </span>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Contact Us button that directly opens email */}
-            <a
-              href={CONTACT_MAILTO}
-              className="btn btn-blue btn-sm"
-              title="Send email to techflowlabs6@gmail.com"
+        </section>
+        <section
+          className="container app-section"
+          id="apps"
+          aria-labelledby="apps-title"
+        >
+          {(offline || reconnected) && (
+            <div
+              className={`connection-notice ${offline ? "connection-notice--offline" : ""}`}
+              role="status"
             >
-              ✉️ Contact Us
-            </a>
-
-            {isAdmin ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#c084fc', fontFamily: 'monospace' }}>
-                  Admin: {ADMIN_EMAIL}
-                </span>
-                <button onClick={handleLogout} className="btn btn-red btn-sm">
-                  Logout
+              {offline ? <WifiOff size={18} /> : <CheckCircle2 size={18} />}
+              <span>
+                {offline
+                  ? "You’re offline. Check your connection before opening an app."
+                  : "You’re back online."}
+              </span>
+            </div>
+          )}
+          {storageFailed && (
+            <p className="storage-notice" role="status">
+              Your browser could not save changes. Keep this tab open to retain
+              your current cards.
+            </p>
+          )}
+          <div className="catalogue-toolbar">
+            <div className="search-field">
+              <Search size={20} aria-hidden="true" />
+              <label className="sr-only" htmlFor="app-search">
+                Search apps
+              </label>
+              <input
+                id="app-search"
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search apps"
+                autoComplete="off"
+              />
+              {search && (
+                <button
+                  className="search-clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  <X size={17} />
+                </button>
+              )}
+            </div>
+            <div className="filter-scroller">
+              <div
+                className="category-filters"
+                role="group"
+                aria-label="Filter apps by category"
+              >
+                {CATEGORIES.map((item) => (
+                  <button
+                    key={item}
+                    className={`filter-button ${category === item ? "is-active" : ""}`}
+                    aria-pressed={category === item}
+                    onClick={() => setCategory(item)}
+                  >
+                    {categoryLabel(item)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="catalogue-heading">
+            <h2 id="apps-title" aria-live="polite" aria-atomic="true">
+              {filtered.length}{" "}
+              {filtered.length === 1 ? "application" : "applications"}
+              {isFiltered && (
+                <span className="result-total"> / {apps.length}</span>
+              )}
+            </h2>
+            {isAdmin && <span className="admin-indicator">Admin mode</span>}
+          </div>
+          {isAdmin && (
+            <div className="admin-toolbar">
+              <p>Manage the cards saved on this device.</p>
+              <div>
+                <button
+                  className="button button--primary"
+                  onClick={() => openEditor()}
+                >
+                  <Plus size={17} />
+                  Add new app
+                </button>
+                <button className="button button--quiet" onClick={restore}>
+                  <RotateCcw size={16} />
+                  Restore defaults
                 </button>
               </div>
-            ) : (
-              <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-gray btn-sm">
-                Admin Login
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container">
-        
-        {/* Welcome Banner */}
-        <div className="hero-banner">
-          <div className="hero-text">
-            <h2>Welcome to MyTechFlow Labs Portal</h2>
-            <p>Direct shortcuts & unified hub to launch all our live production web applications and 3D arcade games.</p>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <a
-              href={CONTACT_MAILTO}
-              className="btn btn-gray"
+            </div>
+          )}
+          {filtered.length ? (
+            <div
+              className={`app-grid ${!isFiltered ? "app-grid--mosaic" : ""}`}
             >
-              ✉️ Get in Touch
-            </a>
-
-            {isAdmin && (
-              <>
-                <button onClick={handleOpenAddModal} className="btn btn-blue">
-                  + Add New App
-                </button>
-                <button onClick={handleResetDefaults} className="btn btn-gray btn-sm" title="Restore default apps">
-                  🔄 Restore Defaults
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: '13px', color: '#94a3b8', marginRight: '4px', fontWeight: '600' }}>Category:</span>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`btn btn-sm ${selectedCategory === cat ? 'btn-blue' : 'btn-gray'}`}
-              style={{ borderRadius: '20px', padding: '4px 14px' }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Applications Section */}
-        <div>
-          <div className="section-title">
-            <span>Applications ({filteredApps.length})</span>
-            {isAdmin && (
-              <span style={{ fontSize: '12px', color: '#c084fc', fontWeight: 'normal' }}>
-                Admin Mode Active
-              </span>
-            )}
-          </div>
-
-          {filteredApps.length > 0 ? (
-            <div className="cards-grid">
-              {filteredApps.map((app) => (
-                <div
-                  key={app.id}
-                  className="card"
-                  onClick={() => handleCardClick(app.url)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div style={{ position: 'relative' }}>
-                    <img
-                      src={app.imageUrl}
-                      alt={app.name}
-                      className="card-img"
-                      loading="lazy"
-                    />
-                    {app.category && (
-                      <span style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: 'rgba(15, 23, 42, 0.85)',
-                        backdropFilter: 'blur(6px)',
-                        color: '#60a5fa',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(59, 130, 246, 0.3)'
-                      }}>
-                        {app.category}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="card-body">
-                    <div>
-                      <div className="card-title">{app.name}</div>
-                      
-                      {app.shortNote && (
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#34d399',
-                          fontWeight: '600',
-                          marginBottom: '6px'
-                        }}>
-                          📌 {app.shortNote}
-                        </div>
-                      )}
-
-                      <div className="card-desc">{app.description}</div>
-                    </div>
-
-                    <div className="card-actions" onClick={(e) => e.stopPropagation()}>
-                      <a
-                        href={app.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-blue btn-sm"
-                        style={{ flex: 1 }}
-                      >
-                        Launch App ↗
-                      </a>
-
-                      {isAdmin && (
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <button
-                            onClick={() => handleOpenEditModal(app)}
-                            className="btn btn-gray btn-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteApp(app.id)}
-                            className="btn btn-red btn-sm"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              {filtered.map((app, index) => (
+                <AppCard
+                  key={`${app.id}-${app.imageUrl}`}
+                  app={app}
+                  index={index}
+                  isAdmin={isAdmin}
+                  onEdit={openEditor}
+                  onDelete={deleteApp}
+                  onDetails={openDetails}
+                />
               ))}
             </div>
           ) : (
-            <div style={{ padding: '32px', textAlign: 'center', backgroundColor: '#1e293b', borderRadius: '12px', marginBottom: '32px' }}>
-              <p style={{ color: '#94a3b8' }}>No applications found matching "{search}".</p>
-              <button onClick={() => { setSearch(''); setSelectedCategory('All'); }} className="btn btn-gray btn-sm" style={{ marginTop: '12px' }}>
-                Clear Filters
+            <div className="empty-state">
+              <span className="empty-icon">
+                <Search size={28} />
+              </span>
+              <h3>No apps found</h3>
+              <p>
+                {search.trim() ? (
+                  <>Try another search or category to find your app.</>
+                ) : (
+                  <>There are no apps in this category yet.</>
+                )}
+              </p>
+              <button className="button button--primary" onClick={resetFilters}>
+                Clear filters
               </button>
+              {isAdmin && !apps.length && (
+                <button
+                  className="button button--quiet"
+                  onClick={() => openEditor()}
+                >
+                  Add your first app
+                </button>
+              )}
             </div>
           )}
-        </div>
-
-        {/* Skills Section */}
-        <div className="skills-box">
-          <div className="section-title" style={{ marginBottom: '8px' }}>
-            <span>Skills & Engineering Capabilities</span>
-          </div>
-          <p style={{ color: '#94a3b8', fontSize: '13px' }}>
-            Full-stack engineering, 3D WebGL graphics, and Cloud Native DevOps:
-          </p>
-
-          <div className="skills-grid">
-            {SKILLS.map((s, idx) => (
-              <div key={idx} className="skill-item">
-                <h4>{s.title}</h4>
-                <p>{s.desc}</p>
+          <details className="capabilities" id="capabilities">
+            <summary>
+              <span>
+                <Code2 size={18} />
+                Engineering capabilities
+              </span>
+              <ChevronDown size={18} />
+            </summary>
+            <div className="capabilities-content">
+              <p>The craft behind our apps.</p>
+              <div className="skills-grid">
+                {SKILLS.map((skill) => (
+                  <div className="skill-item" key={skill.title}>
+                    <h3>{skill.title}</h3>
+                    <p>{skill.desc}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-
+            </div>
+          </details>
+        </section>
       </main>
-
-      {/* Footer */}
-      <footer>
-        <div className="container">
-          <p>© {new Date().getFullYear()} MyTechFlow Labs (mytechflowlabs.com). All rights reserved.</p>
-          <p style={{ marginTop: '8px' }}>
-            Questions or feedback? <a href={CONTACT_MAILTO} style={{ color: '#60a5fa', fontWeight: '600' }}>✉️ Contact Us ({ADMIN_EMAIL})</a>
-          </p>
+      <footer className="site-footer">
+        <div className="container footer-inner">
+          <a href={CONTACT_MAILTO}>
+            Let’s talk
+            <ArrowUpRight size={15} />
+          </a>
+          <span>© {new Date().getFullYear()} MyTechFlow Labs</span>
+          <a href={CONTACT_MAILTO} className="footer-email">
+            {ADMIN_EMAIL}
+          </a>
         </div>
       </footer>
 
-      {/* Admin Login Modal */}
-      {isLoginModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsLoginModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Admin Login</h3>
-              <button onClick={() => setIsLoginModalOpen(false)} className="modal-close">×</button>
+      {modal === "login" && (
+        <Dialog title="Admin login" onClose={closeModal}>
+          <form onSubmit={handleLogin}>
+            <p className="dialog-intro">Manage your application collection.</p>
+            <div className="form-field">
+              <label htmlFor="admin-email">Email address</label>
+              <input
+                id="admin-email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                placeholder={ADMIN_EMAIL}
+                required
+                autoFocus
+              />
             </div>
-
-            <form onSubmit={handleLogin}>
-              <div className="form-group">
-                <label>Admin Email</label>
-                <input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder={ADMIN_EMAIL}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Enter password..."
-                />
-              </div>
-
-              {loginError && <div className="error-msg">{loginError}</div>}
-
-              <div className="form-actions">
-                <button type="submit" className="btn btn-blue">
-                  Login
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleQuickLogin}
-                className="btn btn-gray"
-                style={{ width: '100%', marginTop: '10px', fontSize: '12px' }}
+            <div className="form-field">
+              <label htmlFor="admin-password">Password</label>
+              <input
+                id="admin-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter password"
+              />
+            </div>
+            {loginError && (
+              <p className="form-error" role="alert">
+                {loginError}
+              </p>
+            )}
+            <button className="button button--primary full-width" type="submit">
+              Log in
+              <ArrowUpRight size={16} />
+            </button>
+            <button
+              className="button button--quiet full-width quick-login"
+              type="button"
+              onClick={() => {
+                setIsAdmin(true);
+                closeModal();
+              }}
+            >
+              <Zap size={16} />
+              1-click login
+            </button>
+          </form>
+        </Dialog>
+      )}
+      {modal === "form" && (
+        <Dialog
+          title={editingApp ? "Edit application" : "Add application"}
+          onClose={closeModal}
+          className="dialog--wide"
+        >
+          <form onSubmit={saveApp} key={editingApp?.id || "new"}>
+            <div className="form-field">
+              <label htmlFor="form-name">
+                App name <span>*</span>
+              </label>
+              <input
+                id="form-name"
+                name="name"
+                defaultValue={editingApp?.name || ""}
+                required
+                maxLength={120}
+                autoFocus
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="form-note">Short note</label>
+              <input
+                id="form-note"
+                name="shortNote"
+                defaultValue={editingApp?.shortNote || ""}
+                maxLength={240}
+                placeholder="A short description for the card"
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="form-url">
+                App web address <span>*</span>
+              </label>
+              <input
+                id="form-url"
+                name="url"
+                type="url"
+                defaultValue={editingApp?.url || ""}
+                placeholder="https://your-app.com"
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="form-category">Category</label>
+              <select
+                id="form-category"
+                name="category"
+                defaultValue={editingApp?.category || "Productivity"}
               >
-                ⚡ 1-Click Login ({ADMIN_EMAIL})
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add / Edit App Modal */}
-      {isAppModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAppModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{editingApp ? 'Edit Application' : 'Add New Application'}</h3>
-              <button onClick={() => setIsAppModalOpen(false)} className="modal-close">×</button>
+                {CATEGORIES.filter((item) => item !== "All").map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
             </div>
-
-            <form onSubmit={handleSaveApp}>
-              <div className="form-group">
-                <label>App Name *</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g. Lost Frontier 3D Runner"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Short Note / Tagline</label>
-                <input
-                  type="text"
-                  value={formShortNote}
-                  onChange={(e) => setFormShortNote(e.target.value)}
-                  placeholder="e.g. 3D Sci-Fi Endless Arcade Runner"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>App Web Address (URL) *</label>
-                <input
-                  type="url"
-                  value={formUrl}
-                  onChange={(e) => setFormUrl(e.target.value)}
-                  placeholder="https://lostrun.mytechflowlabs.com/"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #334155',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    fontSize: '13px'
-                  }}
-                >
-                  <option value="Education">Education</option>
-                  <option value="Productivity">Productivity</option>
-                  <option value="Finance">Finance</option>
-                  <option value="3D Games & Arcade">3D Games & Arcade</option>
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Screenshot Image URL</label>
-                <input
-                  type="url"
-                  value={formImageUrl}
-                  onChange={(e) => setFormImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Description</label>
-                <textarea
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Short description of what the app does..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  onClick={() => setIsAppModalOpen(false)}
-                  className="btn btn-gray"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-blue">
-                  {editingApp ? 'Save Changes' : 'Add App'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            <div className="form-field">
+              <label htmlFor="form-image">Image web address</label>
+              <input
+                id="form-image"
+                name="imageUrl"
+                type="url"
+                defaultValue={editingApp?.imageUrl || ""}
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="form-description">Description</label>
+              <textarea
+                id="form-description"
+                name="description"
+                rows={3}
+                defaultValue={editingApp?.description || ""}
+                maxLength={2000}
+              />
+            </div>
+            {formError && (
+              <p className="form-error" role="alert">
+                {formError}
+              </p>
+            )}
+            <div className="form-actions">
+              <button
+                className="button button--quiet"
+                type="button"
+                onClick={closeModal}
+              >
+                Cancel
+              </button>
+              <button className="button button--primary" type="submit">
+                {editingApp ? "Save changes" : "Add app"}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
-
+      {modal === "details" && detailApp && (
+        <Dialog title={detailApp.name} onClose={closeModal}>
+          <span className="detail-category">
+            {categoryLabel(detailApp.category)}
+          </span>
+          {detailApp.shortNote && (
+            <p className="detail-note">{detailApp.shortNote}</p>
+          )}
+          <p className="detail-description">
+            {detailApp.description || "Open the app to explore more."}
+          </p>
+          {safeWebUrl(detailApp.url) ? (
+            <a
+              className="button button--primary full-width"
+              href={safeWebUrl(detailApp.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Launch app
+              <ArrowUpRight size={18} />
+            </a>
+          ) : (
+            <p className="form-error">This app needs a valid web address.</p>
+          )}
+        </Dialog>
+      )}
     </div>
   );
 }
