@@ -8,6 +8,14 @@ export const INITIAL_APPS = [
     description:
       "Build your French vocabulary with Lexi-Parcours: words, review, and everyday practice.",
     category: "Education",
+    status: "live",
+    featured: true,
+    addedAt: "2026-11-14",
+    features: [
+      "French vocabulary, every day",
+      "Words and review in one place",
+      "Everyday practice sessions",
+    ],
   },
   {
     id: "1",
@@ -19,6 +27,14 @@ export const INITIAL_APPS = [
     description:
       "AI-assisted French vocabulary, pronunciation audio, grammar rules, and interactive reading exercises for French learners.",
     category: "Education",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "AI-assisted vocabulary",
+      "Pronunciation audio",
+      "Grammar rules and reading exercises",
+    ],
   },
   {
     id: "2",
@@ -30,6 +46,14 @@ export const INITIAL_APPS = [
     description:
       "Internal time log management tool, Pomodoro focus sessions, productivity tracking, and billable revenue analytics.",
     category: "Productivity",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Pomodoro focus sessions",
+      "Productivity tracking",
+      "Billable revenue analytics",
+    ],
   },
   {
     id: "3",
@@ -41,6 +65,14 @@ export const INITIAL_APPS = [
     description:
       "Official format mock exam tests, listening & reading comprehension practice, and Canadian CLB score prediction.",
     category: "Education",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Official-format mock tests",
+      "Listening and reading practice",
+      "Canadian CLB score prediction",
+    ],
   },
   {
     id: "4",
@@ -53,6 +85,14 @@ export const INITIAL_APPS = [
     description:
       "Rideshare shift money calculator, fuel expense logs, tax deductions, and net hourly profit analytics.",
     category: "Finance",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Shift profit calculator",
+      "Fuel expense logs",
+      "Tax deductions and net hourly analytics",
+    ],
   },
   {
     id: "5",
@@ -65,6 +105,14 @@ export const INITIAL_APPS = [
     description:
       "High-octane 3D endless runner featuring procedural terrain generation, obstacle dodging, cyber soundtrack, and real-time score leaderboards.",
     category: "3D Games & Arcade",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Procedural terrain generation",
+      "Obstacle dodging",
+      "Real-time score leaderboards",
+    ],
   },
   {
     id: "6",
@@ -76,6 +124,14 @@ export const INITIAL_APPS = [
     description:
       "Adrenaline-fueled retro neon grid arcade game with dynamic hazards, speed multipliers, particle effects, and high-score survival.",
     category: "3D Games & Arcade",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Dynamic hazards",
+      "Speed multipliers",
+      "High-score survival",
+    ],
   },
   {
     id: "7",
@@ -87,6 +143,14 @@ export const INITIAL_APPS = [
     description:
       "Competitive reflex speed benchmark tool featuring visual stimulus tracking, reaction time analytics, and precision accuracy tests.",
     category: "3D Games & Arcade",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "Visual stimulus tracking",
+      "Reaction-time analytics",
+      "Precision accuracy tests",
+    ],
   },
   {
     id: "8",
@@ -98,6 +162,14 @@ export const INITIAL_APPS = [
     description:
       "Hypnotic 3D physics arcade experience smashing through crystalline glass obstacles, temporal warp tunnels, and rhythmic destruction.",
     category: "3D Games & Arcade",
+    status: "live",
+    featured: false,
+    addedAt: "",
+    features: [
+      "3D glass-shattering physics",
+      "Temporal warp tunnels",
+      "Rhythmic destruction",
+    ],
   },
 ];
 

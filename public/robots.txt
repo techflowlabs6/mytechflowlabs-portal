@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://mytechflowlabs.com/sitemap.xml

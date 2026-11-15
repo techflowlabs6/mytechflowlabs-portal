@@ -4,9 +4,14 @@ import fs from "node:fs";
 import { INITIAL_APPS } from "../src/data/portalApps.js";
 import {
   appsJsonPayload,
+  isNewApp,
   parseAppsJson,
+  readLaunchCounts,
+  recordLaunch,
   safeImageUrl,
+  sortApps,
 } from "../src/lib/portalState.js";
+import { buildContactMailto } from "../src/lib/contact.js";
 import { resolveTheme } from "../src/lib/theme.js";
 import { dataUrlBytes, dataUrlExtension } from "../src/lib/imageUpload.js";
 
@@ -90,4 +95,105 @@ test("wide screens grow the container and add grid columns", () => {
   assert.ok(appCss.includes("grid-template-columns: repeat(6, minmax(0, 1fr))"));
   const wideBlock = appCss.slice(appCss.indexOf("@media (min-width: 1400px)"));
   assert.ok(wideBlock.includes("grid-column: auto"));
+});
+
+test("sorting puts featured first, newest by date, A–Z, and most-launched", () => {
+  const apps = [
+    { id: "b", name: "Beta App", featured: false, addedAt: "2026-11-10" },
+    { id: "a", name: "Alpha App", featured: true, addedAt: "2026-11-01" },
+    { id: "c", name: "Gamma App", featured: false, addedAt: "2026-11-14" },
+  ];
+  assert.deepEqual(
+    sortApps(apps, "featured").map((app) => app.id),
+    ["a", "b", "c"],
+  );
+  assert.deepEqual(
+    sortApps(apps, "newest").map((app) => app.id),
+    ["c", "b", "a"],
+  );
+  assert.deepEqual(
+    sortApps(apps, "az").map((app) => app.name),
+    ["Alpha App", "Beta App", "Gamma App"],
+  );
+  assert.deepEqual(
+    sortApps(apps, "launched", { c: 5, b: 2 }).map((app) => app.id),
+    ["c", "b", "a"],
+  );
+});
+
+test("the New badge only shows for apps added in the last 30 days", () => {
+  const now = new Date("2026-11-15T12:00:00.000Z");
+  assert.equal(isNewApp({ addedAt: "2026-11-14" }, now), true);
+  assert.equal(isNewApp({ addedAt: "2026-10-01" }, now), false);
+  assert.equal(isNewApp({ addedAt: "" }, now), false);
+  assert.equal(isNewApp({}, now), false);
+});
+
+test("launch counts accumulate per app in storage", () => {
+  const store = new Map();
+  const storage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, value),
+  };
+  assert.deepEqual(readLaunchCounts(storage), {});
+  recordLaunch(storage, "lexi-parcours");
+  recordLaunch(storage, "lexi-parcours");
+  recordLaunch(storage, "1");
+  assert.deepEqual(readLaunchCounts(storage), {
+    "lexi-parcours": 2,
+    1: 1,
+  });
+});
+
+test("contact forms build a pre-filled mailto fallback", () => {
+  const message = buildContactMailto("message", {
+    name: "Naveen",
+    email: "a@b.com",
+    message: "Hello",
+  });
+  assert.ok(message.startsWith("mailto:techflowlabs6@gmail.com?subject="));
+  assert.ok(message.includes(encodeURIComponent("Inquiry via MyTechFlow Labs")));
+  assert.ok(message.includes(encodeURIComponent("Hello")));
+  const request = buildContactMailto("request", { message: "A timer app" });
+  assert.ok(request.includes(encodeURIComponent("App idea for MyTechFlow Labs")));
+  const subscribe = buildContactMailto("subscribe", { email: "a@b.com" });
+  assert.ok(subscribe.includes(encodeURIComponent("Subscribe me to MyTechFlow Labs updates")));
+  assert.ok(subscribe.includes(encodeURIComponent("a@b.com")));
+});
+
+test("the committed catalog carries status, featured, dates and features", () => {
+  const raw = fs.readFileSync(new URL("../public/apps.json", import.meta.url), "utf8");
+  const { apps } = parseAppsJson(raw);
+  assert.equal(apps.length, 9);
+  for (const app of apps) {
+    assert.ok(["live", "beta", "soon"].includes(app.status), app.name);
+    assert.equal(typeof app.featured, "boolean", app.name);
+    assert.ok(Array.isArray(app.features), app.name);
+  }
+  assert.deepEqual(
+    apps.filter((app) => app.featured).map((app) => app.id),
+    ["lexi-parcours"],
+  );
+});
+
+test("PWA shell files exist: manifest with icons, service worker, robots, sitemap", () => {
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      new URL("../public/manifest.webmanifest", import.meta.url),
+      "utf8",
+    ),
+  );
+  assert.equal(manifest.name, "MyTechFlow Labs");
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192"));
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
+  const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
+  assert.ok(sw.includes("/apps.json"));
+  assert.ok(
+    fs.existsSync(new URL("../public/robots.txt", import.meta.url)),
+  );
+  const sitemap = fs.readFileSync(
+    new URL("../public/sitemap.xml", import.meta.url),
+    "utf8",
+  );
+  assert.ok(sitemap.includes("https://mytechflowlabs.com/"));
 });
