@@ -58,7 +58,6 @@ import {
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
 import { applyAccent, readAccent, writeAccent } from "./lib/accentTheme.js";
-import AdminTools from "./components/AdminTools.jsx";
 import {
   effectiveCounts,
   fetchSharedStats,
@@ -81,6 +80,7 @@ import {
   dataUrlBytes,
   validateImageFile,
 } from "./lib/imageUpload.js";
+import AdminTools from "./components/AdminTools.jsx";
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
@@ -1705,6 +1705,9 @@ export default function App() {
           {isAdmin && (
             <AdminTools
               apps={apps}
+              launches={effectiveLaunches}
+              likes={effectiveLikes}
+              shared={sharedStats.shared}
               accent={accent}
               onAccentChange={setAccent}
               publishToken={publishToken}
