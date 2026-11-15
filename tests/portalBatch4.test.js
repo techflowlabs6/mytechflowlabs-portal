@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
-import fs from "node:fs";
 import { ACCENT_PRESETS, DEFAULT_ACCENT, presetById, readAccent, resolveAccent, writeAccent } from "../src/lib/accentTheme.js";
 import { createNote, deleteNote, readNotes, upsertNote, writeNotes } from "../src/lib/notes.js";
 import { createRenewal, daysUntil, deleteRenewal, readRenewals, renewalStatus, seedRenewals, sortRenewals, upsertRenewal, writeRenewals } from "../src/lib/renewals.js";
@@ -158,22 +157,21 @@ function decodeJwt(assertion) {
   };
 }
 
-// api/contact.js still uses module.exports (PR #5 owns the ESM fix), so
-// the test loads it through a small CommonJS shim instead of importing it.
-const contactSrc = fs.readFileSync(new URL("../api/contact.js", import.meta.url), "utf8");
+// api/contact.js is ESM now (PR #5), so the handler is imported directly
+// like api/messages.js above. It reads the global fetch at call time, so
+// the mock is installed around each call and restored after.
+import contactHandler from "../api/contact.js";
+
 function loadContactHandler(fetchFn) {
-  const module = { exports: {} };
-  const fn = new Function("module", "exports", "require", "process", "fetch", contactSrc);
-  fn(
-    module,
-    module.exports,
-    () => {
-      throw new Error("unexpected require() in api/contact.js");
-    },
-    process,
-    fetchFn,
-  );
-  return module.exports;
+  return async (req, res) => {
+    const realFetch = globalThis.fetch;
+    globalThis.fetch = fetchFn;
+    try {
+      return await contactHandler(req, res);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  };
 }
 
 // ---------------------------------------------------------------------------
