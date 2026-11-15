@@ -1,0 +1,78 @@
+{
+  "entries": [
+    {
+      "date": "2026-11-15",
+      "items": [
+        "Real contact and request-an-app forms (email sending once configured)",
+        "Sort apps: featured, newest, A–Z, most launched",
+        "Status badges (Live, Beta, Coming soon) plus a New badge",
+        "Featured spotlight at the top of the catalog",
+        "Richer footer with social links, newsletter signup and catalog date",
+        "App detail pages with shareable links (#/app/<id>)",
+        "Launch tracking with a Jump back in row",
+        "Newsletter signup in the footer",
+        "Installable app: manifest, offline support and home-screen icons"
+      ],
+      "itemsFr": [
+        "Vrais formulaires de contact et de demande d'appli (envoi d'e-mail une fois configuré)",
+        "Tri des applis : à la une, plus récentes, A–Z, plus lancées",
+        "Badges de statut (En ligne, Bêta, Bientôt) et badge Nouveau",
+        "Une appli à la une en haut du catalogue",
+        "Pied de page enrichi : liens sociaux, infolettre et date du catalogue",
+        "Pages de détail par appli avec liens partageables (#/app/<id>)",
+        "Suivi des lancements avec une rangée Reprendre",
+        "Inscription à l'infolettre dans le pied de page",
+        "Appli installable : manifeste, mode hors ligne et icônes d'écran d'accueil"
+      ],
+      "title": "All 10 upgrades land at once",
+      "titleFr": "Les 10 améliorations arrivent d'un coup"
+    },
+    {
+      "date": "2026-11-15",
+      "items": [
+        "The layout now grows with the screen instead of leaving empty space on the sides",
+        "App grid goes up to 5 columns on wide screens and 6 on very wide ones",
+        "Phones, tablets and laptops look exactly as before"
+      ],
+      "itemsFr": [
+        "La mise en page grandit avec l'écran au lieu de laisser du vide sur les côtés",
+        "La grille passe à 5 colonnes sur écrans larges et 6 sur écrans très larges",
+        "Téléphones, tablettes et portables inchangés"
+      ],
+      "title": "Full width on big screens",
+      "titleFr": "Plein écran sur les grands écrans"
+    },
+    {
+      "date": "2026-11-15",
+      "items": [
+        "Day/night switch at the top of the screen, saved per device",
+        "Upload a card image straight from your device, or paste an image link",
+        "Publish to GitHub makes admin cards permanent on every device"
+      ],
+      "itemsFr": [
+        "Bascule jour/nuit en haut de l'écran, mémorisée par appareil",
+        "Envoie une image de carte depuis ton appareil, ou colle un lien d'image",
+        "Publier sur GitHub rend les cartes admin permanentes sur tous les appareils"
+      ],
+      "title": "Night mode, image upload, permanent catalog",
+      "titleFr": "Mode nuit, envoi d'image, catalogue permanent"
+    },
+    {
+      "date": "2026-11-14",
+      "items": [
+        "Citrus & Ink design, 9 apps in one place",
+        "Search, categories and a featured app",
+        "Admin mode to add, edit and remove cards"
+      ],
+      "itemsFr": [
+        "Design Citrus & Ink, 9 applis au même endroit",
+        "Recherche, catégories et une appli à la une",
+        "Mode admin pour ajouter, modifier et supprimer des cartes"
+      ],
+      "title": "MyTechFlow Labs portal launches",
+      "titleFr": "Lancement du portail MyTechFlow Labs"
+    }
+  ],
+  "updatedAt": "2026-11-15T18:16:39.918Z",
+  "version": 1
+}

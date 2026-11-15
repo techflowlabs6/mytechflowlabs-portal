@@ -118,6 +118,13 @@ export function hydrateApps(saved, migrated) {
           features: Array.isArray(app.features)
             ? app.features.filter((item) => typeof item === "string")
             : [],
+          shortNoteFr:
+            typeof app.shortNoteFr === "string" ? app.shortNoteFr : "",
+          descriptionFr:
+            typeof app.descriptionFr === "string" ? app.descriptionFr : "",
+          featuresFr: Array.isArray(app.featuresFr)
+            ? app.featuresFr.filter((item) => typeof item === "string")
+            : [],
         }))
     : INITIAL_APPS.map((app) => ({ ...app }));
 
