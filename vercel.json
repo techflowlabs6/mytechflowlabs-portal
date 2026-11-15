@@ -3,6 +3,9 @@
     "functions": {
         "api/publish-apps.js": {
             "maxDuration": 30
+        },
+        "api/uptime.js": {
+            "maxDuration": 30
         }
     },
     "headers": [

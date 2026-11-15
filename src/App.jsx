@@ -79,6 +79,7 @@ import {
   dataUrlBytes,
   validateImageFile,
 } from "./lib/imageUpload.js";
+import AdminTools from "./components/AdminTools.jsx";
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
@@ -1692,6 +1693,14 @@ export default function App() {
                 </p>
               )}
             </div>
+          )}
+          {isAdmin && (
+            <AdminTools
+              apps={apps}
+              launches={effectiveLaunches}
+              likes={effectiveLikes}
+              shared={sharedStats.shared}
+            />
           )}
           {filtered.length ? (
             <div
