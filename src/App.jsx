@@ -81,6 +81,7 @@ import {
   validateImageFile,
 } from "./lib/imageUpload.js";
 import AdminTools from "./components/AdminTools.jsx";
+import ProfileView from "./components/ProfileView.jsx";
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
@@ -913,13 +914,18 @@ export default function App() {
     };
   }, [menuOpen]);
 
-  // Hash pages: #/about and #/changelog open those pages, #/app/<id>
-  // opens that app's details, anything else shows the catalog.
+  // Hash pages: #/about, #/profile and #/changelog open those pages,
+  // #/app/<id> opens that app's details, anything else shows the catalog.
   useEffect(() => {
     const openFromHash = () => {
       const hash = window.location.hash || "";
       if (hash === "#/about") {
         setView("about");
+        setModal(null);
+        return;
+      }
+      if (hash === "#/profile") {
+        setView("profile");
         setModal(null);
         return;
       }
@@ -1359,6 +1365,17 @@ export default function App() {
         {t(lang, "navAbout")}
       </a>
       <a
+        href="#/profile"
+        className={`nav-link ${view === "profile" ? "nav-link--active" : ""}`}
+        aria-current={view === "profile" ? "page" : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          goToView("profile");
+        }}
+      >
+        {t(lang, "navProfile")}
+      </a>
+      <a
         href="#/changelog"
         className={`nav-link ${view === "changelog" ? "nav-link--active" : ""}`}
         aria-current={view === "changelog" ? "page" : undefined}
@@ -1458,6 +1475,15 @@ export default function App() {
         >
           {view === "about" ? (
             <AboutView apps={apps} lang={lang} />
+          ) : view === "profile" ? (
+            <ProfileView
+              apps={apps}
+              launches={effectiveLaunches}
+              likes={effectiveLikes}
+              shared={sharedStats.shared}
+              lang={lang}
+              socials={SOCIAL_LINKS}
+            />
           ) : view === "changelog" ? (
             <ChangelogView
               entries={changelog}
@@ -1834,6 +1860,15 @@ export default function App() {
               }}
             >
               {t(lang, "navAbout")}
+            </a>
+            <a
+              href="#/profile"
+              onClick={(event) => {
+                event.preventDefault();
+                goToView("profile");
+              }}
+            >
+              {t(lang, "navProfile")}
             </a>
             <a
               href="#/changelog"

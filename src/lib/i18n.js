@@ -60,6 +60,7 @@ export const STRINGS = {
   en: {
     navApps: "Apps",
     navAbout: "About",
+    navProfile: "Profile",
     navChangelog: "What's new",
     navContact: "Contact",
     navAdmin: "Admin",
@@ -103,6 +104,22 @@ export const STRINGS = {
     aboutApps: "apps",
     aboutCategories: "categories",
     aboutVisitChannel: "Visit the YouTube channel",
+    profileElsewhere: "Elsewhere",
+    profileAnalyticsTitle: "Site analytics",
+    profileAnalyticsNote:
+      "Clicks, launches and likes across the portal — a small analytics page for this site.",
+    profileSourceShared: "Shared totals across all visitors.",
+    profileSourceLocal:
+      "This device only — shared counts need the Drive setup.",
+    profileAppsCount: "Apps",
+    profileTotalLaunches: "Total launches",
+    profileTotalLikes: "Total likes",
+    profileMostLaunched: "Most launched",
+    profileNewest: "Newest app",
+    profileLaunchesPerApp: "Launches per app",
+    profileLikesPerApp: "Likes per app",
+    profileEmpty:
+      "No launches recorded yet — open an app and the numbers appear here.",
     changelogTitle: "What's new",
     changelogNote: "Every change to this portal, newest first.",
     changelogEmpty: "Nothing here yet — check back after the next update.",
@@ -151,6 +168,7 @@ export const STRINGS = {
   fr: {
     navApps: "Applis",
     navAbout: "À propos",
+    navProfile: "Profil",
     navChangelog: "Quoi de neuf",
     navContact: "Contact",
     navAdmin: "Admin",
@@ -194,6 +212,22 @@ export const STRINGS = {
     aboutApps: "applis",
     aboutCategories: "catégories",
     aboutVisitChannel: "Visiter la chaîne YouTube",
+    profileElsewhere: "Ailleurs",
+    profileAnalyticsTitle: "Statistiques du site",
+    profileAnalyticsNote:
+      "Clics, lancements et j'aime sur tout le portail — une petite page de statistiques pour ce site.",
+    profileSourceShared: "Totaux partagés de tous les visiteurs.",
+    profileSourceLocal:
+      "Cet appareil seulement — les totaux partagés nécessitent la configuration Drive.",
+    profileAppsCount: "Applis",
+    profileTotalLaunches: "Lancements au total",
+    profileTotalLikes: "J'aime au total",
+    profileMostLaunched: "La plus lancée",
+    profileNewest: "Appli la plus récente",
+    profileLaunchesPerApp: "Lancements par appli",
+    profileLikesPerApp: "J'aime par appli",
+    profileEmpty:
+      "Aucun lancement enregistré pour l'instant — ouvre une appli et les chiffres apparaîtront ici.",
     changelogTitle: "Quoi de neuf",
     changelogNote: "Tous les changements du portail, du plus récent au plus ancien.",
     changelogEmpty: "Rien pour l'instant — reviens après la prochaine mise à jour.",
