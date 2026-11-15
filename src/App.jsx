@@ -56,6 +56,13 @@ import {
   writeSavedAt,
 } from "./lib/portalState.js";
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
+import {
+  clearAdminAuth,
+  fetchLoginConfigured,
+  readAdminAuth,
+  verifyAdminPasswordRemote,
+  writeAdminAuth,
+} from "./lib/adminLogin.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
 import { applyAccent, readAccent, writeAccent } from "./lib/accentTheme.js";
 import { readVideosOpen, writeVideosOpen } from "./lib/uiPrefs.js";
@@ -663,7 +670,9 @@ function VideosRow({ videos, lang }) {
 
 export default function App() {
   const [apps, setApps] = useState(() => readApps(storage()));
-  const [isAdmin, setIsAdmin] = useState(() => readAdmin(storage()));
+  const [isAdmin, setIsAdmin] = useState(
+    () => readAdmin(storage()) || readAdminAuth(session()),
+  );
   const [theme, setTheme] = useState(() =>
     readTheme(
       storage(),
@@ -712,6 +721,11 @@ export default function App() {
   const [detailArtReady, setDetailArtReady] = useState(false);
   const [formError, setFormError] = useState("");
   const [loginError, setLoginError] = useState("");
+  // Whether a password login is configured on the server: null while the
+  // check is still running. When true, the email check and 1-click login
+  // are replaced by the password check.
+  const [loginConfigured, setLoginConfigured] = useState(null);
+  const [loginBusy, setLoginBusy] = useState(false);
   const [storageFailed, setStorageFailed] = useState(false);
   const [offline, setOffline] = useState(() => !navigator.onLine);
   const [reconnected, setReconnected] = useState(false);
@@ -874,12 +888,38 @@ export default function App() {
     writeSavedAt(storage(), new Date().toISOString());
   }, [apps]);
   useEffect(() => {
+    // When a password login is configured, admin access lives in the
+    // session only — never write the legacy localStorage flag.
+    if (loginConfigured === true) return;
     try {
       storage()?.setItem(ADMIN_KEY, isAdmin ? "true" : "false");
     } catch {
       /* Storage may be unavailable in private browsing. */
     }
-  }, [isAdmin]);
+  }, [isAdmin, loginConfigured]);
+  // Ask the server once whether a password login is configured. When it
+  // is, the legacy localStorage flag is not honoured: only this session's
+  // password login counts, so a stale flag cannot reopen Admin.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const configured = await fetchLoginConfigured();
+      if (cancelled) return;
+      setLoginConfigured(configured);
+      if (configured && !readAdminAuth(session())) {
+        setIsAdmin(false);
+        try {
+          storage()?.removeItem(ADMIN_KEY);
+        } catch {
+          /* Storage may be unavailable in private browsing. */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     let timeout;
     const onOffline = () => {
@@ -1158,13 +1198,47 @@ export default function App() {
     setSearch("");
     setCategory("All");
   };
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);
-    if (String(fields.get("email")).trim().toLowerCase() === ADMIN_EMAIL) {
+    if (String(fields.get("email")).trim().toLowerCase() !== ADMIN_EMAIL) {
+      setLoginError("This email does not have admin access.");
+      return;
+    }
+    if (loginConfigured === true) {
+      setLoginBusy(true);
+      const result = await verifyAdminPasswordRemote(
+        String(fields.get("password") || ""),
+      );
+      setLoginBusy(false);
+      if (result.notConfigured) {
+        // The hash was removed after this page loaded: fall back to the
+        // email check, exactly as if no password login existed.
+        setLoginConfigured(false);
+        setIsAdmin(true);
+        closeModal();
+        return;
+      }
+      if (result.error) {
+        setLoginError("Could not reach the login server. Try again.");
+        return;
+      }
+      if (!result.ok) {
+        setLoginError("Wrong password.");
+        return;
+      }
+      writeAdminAuth(session());
+      try {
+        storage()?.removeItem(ADMIN_KEY);
+      } catch {
+        /* Storage may be unavailable in private browsing. */
+      }
       setIsAdmin(true);
       closeModal();
-    } else setLoginError("This email does not have admin access.");
+      return;
+    }
+    setIsAdmin(true);
+    closeModal();
   };
   const handleImageFile = async (file) => {
     const problem = validateImageFile(file);
@@ -1402,6 +1476,7 @@ export default function App() {
         <button
           className="nav-link"
           onClick={() => {
+            clearAdminAuth(session());
             setIsAdmin(false);
             setMenuOpen(false);
           }}
@@ -1961,6 +2036,11 @@ export default function App() {
         <Dialog title="Admin login" onClose={closeModal}>
           <form onSubmit={handleLogin}>
             <p className="dialog-intro">Manage your application collection.</p>
+            {loginConfigured === true && (
+              <p className="dialog-intro">
+                Password login is on — enter your admin password.
+              </p>
+            )}
             <div className="form-field">
               <label htmlFor="admin-email">Email address</label>
               <input
@@ -1981,6 +2061,7 @@ export default function App() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter password"
+                required={loginConfigured === true}
               />
             </div>
             {loginError && (
@@ -1988,21 +2069,27 @@ export default function App() {
                 {loginError}
               </p>
             )}
-            <button className="button button--primary full-width" type="submit">
+            <button
+              className="button button--primary full-width"
+              type="submit"
+              disabled={loginBusy}
+            >
               Log in
               <ArrowUpRight size={16} />
             </button>
-            <button
-              className="button button--quiet full-width quick-login"
-              type="button"
-              onClick={() => {
-                setIsAdmin(true);
-                closeModal();
-              }}
-            >
-              <Zap size={16} />
-              1-click login
-            </button>
+            {loginConfigured !== true && (
+              <button
+                className="button button--quiet full-width quick-login"
+                type="button"
+                onClick={() => {
+                  setIsAdmin(true);
+                  closeModal();
+                }}
+              >
+                <Zap size={16} />
+                1-click login
+              </button>
+            )}
           </form>
         </Dialog>
       )}
