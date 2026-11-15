@@ -6,6 +6,9 @@
         },
         "api/uptime.js": {
             "maxDuration": 30
+        },
+        "api/domains.js": {
+            "maxDuration": 30
         }
     },
     "headers": [
