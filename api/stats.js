@@ -47,9 +47,8 @@ function kvConfig() {
   return url && token ? { url, token } : null;
 }
 
-function driveConfig() {
+function driveConfigFor(fileId) {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "";
-  const fileId = process.env.DRIVE_STATS_FILE_ID || "";
   if (!raw || !fileId) {
     return null;
   }
@@ -64,6 +63,10 @@ function driveConfig() {
   } catch {
     return null;
   }
+}
+
+function driveConfig() {
+  return driveConfigFor(process.env.DRIVE_STATS_FILE_ID || "");
 }
 
 async function kvFetch(config, path, options = {}) {
@@ -182,32 +185,28 @@ function normalizeDriveStats(parsed) {
 
 class DrivePreconditionError extends Error {}
 
-async function readDriveStats(config, token) {
+/**
+ * Generic Drive JSON-file primitives, shared with api/messages.js (which
+ * reads a different Drive file, messages.json). `text` is null when the
+ * file does not exist yet (404); any other failure throws.
+ */
+async function readDriveFile(config, token) {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(config.fileId)}?alt=media`,
     { headers: { Authorization: `Bearer ${token}` } },
   );
-  // A missing file (404) is treated like an empty store — the first
-  // write creates the content. Any other failure is a real error.
   if (response.status === 404) {
-    return { stats: emptyDriveStats(), etag: null };
+    return { text: null, etag: null };
   }
   if (!response.ok) {
     throw new Error(`Drive read failed (${response.status}).`);
   }
   const text = await response.text();
-  let parsed = null;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    // Malformed stored JSON counts as empty, never as a crash.
-    parsed = null;
-  }
   const etag = response.headers?.get?.("etag") || null;
-  return { stats: normalizeDriveStats(parsed), etag };
+  return { text, etag };
 }
 
-async function writeDriveStats(config, token, stats, etag) {
+async function writeDriveFile(config, token, text, etag) {
   const headers = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
@@ -218,7 +217,7 @@ async function writeDriveStats(config, token, stats, etag) {
   }
   const response = await fetch(
     `https://upload.googleapis.com/upload/drive/v3/files/${encodeURIComponent(config.fileId)}?uploadType=media`,
-    { method: "PATCH", headers, body: JSON.stringify(stats) },
+    { method: "PATCH", headers, body: text },
   );
   if (response.status === 412) {
     throw new DrivePreconditionError("Drive file changed since read.");
@@ -227,6 +226,27 @@ async function writeDriveStats(config, token, stats, etag) {
     throw new Error(`Drive write failed (${response.status}).`);
   }
 }
+
+async function readDriveStats(config, token) {
+  // A missing file (404) is treated like an empty store — the first
+  // write creates the content. Any other failure is a real error.
+  const { text, etag } = await readDriveFile(config, token);
+  let parsed = null;
+  try {
+    parsed = text === null ? null : JSON.parse(text);
+  } catch {
+    // Malformed stored JSON counts as empty, never as a crash.
+    parsed = null;
+  }
+  return { stats: normalizeDriveStats(parsed), etag };
+}
+
+async function writeDriveStats(config, token, stats, etag) {
+  await writeDriveFile(config, token, JSON.stringify(stats), etag);
+}
+
+// Named exports for api/messages.js — the stats handler stays the default.
+export { driveAccessToken, driveConfigFor, readDriveFile, writeDriveFile, DrivePreconditionError };
 
 function applyDriveEvent(stats, appId, event) {
   if (event === "launch") {
