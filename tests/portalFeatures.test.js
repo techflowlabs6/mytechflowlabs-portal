@@ -67,3 +67,27 @@ test("public/apps.json is the committed source of truth and matches the seed", (
   assert.ok(updatedAt.length > 0);
   assert.ok(apps.every((app) => app.name && app.url));
 });
+
+test("wide screens grow the container and add grid columns", () => {
+  const indexCss = fs.readFileSync(new URL("../src/index.css", import.meta.url), "utf8");
+  const appCss = fs.readFileSync(new URL("../src/App.css", import.meta.url), "utf8");
+  // Container must widen past the 1200px cap as screens grow.
+  for (const [width, cap] of [
+    ["1400px", "1400px"],
+    ["1680px", "1640px"],
+    ["1920px", "2000px"],
+  ]) {
+    assert.ok(
+      indexCss.includes(`@media (min-width: ${width})`) &&
+        indexCss.includes(`width: min(${cap},`),
+      `container widens at ${width} to ${cap}`,
+    );
+  }
+  // Grid must add columns on big screens and drop the mosaic wide spans there.
+  assert.ok(appCss.includes("@media (min-width: 1400px)"));
+  assert.ok(appCss.includes("grid-template-columns: repeat(5, minmax(0, 1fr))"));
+  assert.ok(appCss.includes("@media (min-width: 1800px)"));
+  assert.ok(appCss.includes("grid-template-columns: repeat(6, minmax(0, 1fr))"));
+  const wideBlock = appCss.slice(appCss.indexOf("@media (min-width: 1400px)"));
+  assert.ok(wideBlock.includes("grid-column: auto"));
+});

@@ -104,6 +104,22 @@ a {
   width: min(1200px, 100% - 64px);
   margin-inline: auto;
 }
+/* Big screens: grow with the screen instead of leaving wide empty margins. */
+@media (min-width: 1400px) {
+  .container {
+    width: min(1400px, 100% - 72px);
+  }
+}
+@media (min-width: 1680px) {
+  .container {
+    width: min(1640px, 100% - 96px);
+  }
+}
+@media (min-width: 1920px) {
+  .container {
+    width: min(2000px, 100% - 96px);
+  }
+}
 .sr-only {
   position: absolute;
   width: 1px;

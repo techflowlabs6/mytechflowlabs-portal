@@ -336,6 +336,23 @@
 .app-grid--mosaic .app-card:nth-child(6n + 4) {
   grid-column: span 2;
 }
+/* Big screens: more columns so the grid fills the width (uniform cards,
+   the mosaic wide spans are for laptop widths and below). */
+@media (min-width: 1400px) {
+  .app-grid,
+  .app-grid--mosaic {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .app-grid--mosaic .app-card:nth-child(n) {
+    grid-column: auto;
+  }
+}
+@media (min-width: 1800px) {
+  .app-grid,
+  .app-grid--mosaic {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
 .app-card {
   position: relative;
   isolation: isolate;
