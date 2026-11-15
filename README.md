@@ -11,10 +11,23 @@ The portal now uses the approved Citrus & Ink design: a light canvas, citrus bra
 - Smooth card reveals, image loading, hover/focus feedback, and dialog transitions use CSS; reduced-motion preferences disable movement.
 - Search and category filtering, app launch links, contact links, app descriptions, and all five engineering capability descriptions remain available.
 - Existing saved app cards are preserved. A one-time migration adds Lexi without restoring intentionally deleted cards or overwriting custom artwork.
-- Admin card edits remain local to the current browser, using the existing admin behavior. This UI change does not implement server-side authentication or change Supabase, API, or deployment configuration.
+- Admin card edits save on the current device immediately, and **Publish to GitHub** (admin bar) commits the catalog to `public/apps.json` so the change appears on every device after the Vercel deploy. Setup: see [PERSISTENCE_SETUP.md](PERSISTENCE_SETUP.md). Without that setup, edits stay on the device only — use **Download apps.json** to commit the catalog by hand. This does not implement server-side authentication or change Supabase configuration.
 - Offline/reconnection feedback reports browser connection events. This does not make the externally hosted apps available offline.
 
 Run `npm test` for persistence, migration, search, and URL-validation tests, and `npm run build` for the production bundle. See [ROLLBACK.md](ROLLBACK.md) for the preserved baseline and recovery procedure.
+
+## Day / night mode
+
+The sun/moon switch in the top bar flips the whole site between the light Citrus & Ink theme and a dark theme, on phone, tablet and desktop. Your choice is saved on the device (`mytechflow_theme`); on first visit the site follows your system setting.
+
+## Adding an app (Admin)
+
+Admin → **Add new app**. For the card image, pick either:
+
+- **Upload image** — choose a file from your device (JPG, PNG, WebP, GIF, AVIF, up to 8 MB). It is resized to 1200px, previewed, and — when you **Publish to GitHub** — stored as a real file under `public/art/uploads/`.
+- **Image URL** — paste any direct image link, including Unsplash.
+
+Saving adds the card on your device right away. **Publish to GitHub** in the admin bar commits `public/apps.json` (and any uploaded images) so the card is permanent and shows on every device. One-time server setup for publishing is in [PERSISTENCE_SETUP.md](PERSISTENCE_SETUP.md).
 
 ## 🌐 Live Deployed Applications Matrix
 
