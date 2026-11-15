@@ -103,3 +103,36 @@ only ever touches this one folder.
 backends are configured, **Drive wins** — to switch to KV, remove the
 `GOOGLE_SERVICE_ACCOUNT_KEY` / `DRIVE_STATS_FILE_ID` env vars (or the KV
 vars stay ignored) and redeploy.
+
+## Messages inbox (same service account, second file)
+
+The Admin "Messages & subscribers" inbox stores every contact-form
+message, app request and newsletter signup in a second JSON file in the
+same folder, using the same service account — no second key is needed.
+
+**The file (already created):**
+
+- File: `messages.json` — id `1oOQP36nZ2WIHIdQOCWsqpZTexywgHZuk`
+- Folder: `mytechflowlabs-portal` — id `1gY4lvD6LTmZnDWG3vCByprym8lwv4YnS`
+- Shape: `{"version":1,"updatedAt":"...","messages":[{"id":"...","type":"message"|"request"|"subscribe","name":"...","email":"...","message":"...","createdAt":"..."}]}` (newest first, at most 500)
+
+**Setup:** the folder share from step 3 above already covers this file
+(the service account is Editor on the whole folder). Just add one more
+env var in Vercel (same place as step 4) and redeploy:
+
+- `DRIVE_MESSAGES_FILE_ID` — `1oOQP36nZ2WIHIdQOCWsqpZTexywgHZuk`
+
+The inbox is admin-only: opening it needs the same
+`ADMIN_PUBLISH_TOKEN` as publishing, so set that too if it is not set
+already (see PERSISTENCE_SETUP.md).
+
+**How to verify it works:** submit the contact form on the live site,
+then open the inbox in Admin — the message should be listed. The form
+itself never breaks when the inbox is unconfigured or Drive is down:
+the message is simply not stored, and the email flow (or the mailto
+fallback) still runs.
+
+**Known limits:** same read-modify-write caveat as the counts above —
+two form submissions at the exact same moment can lose one. Messages
+are capped at 500 in the file (oldest drop off). Read/unread is tracked
+per device in the browser, not in Drive.

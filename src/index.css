@@ -35,6 +35,71 @@
   --field: #0f1712;
   --hover: #223129;
 }
+/* Admin theme presets (see src/lib/accentTheme.js). Each preset sets the
+   accent + surface colours for the light theme, and again for the dark
+   theme. The [data-theme="dark"] combo rules win on specificity, so the
+   day/night toggle keeps working on top of any preset. Amber Teal needs
+   no rules — it matches the defaults above. */
+:root[data-accent="ocean"] {
+  --citrus: #3b82f6;
+  --paper: #f6f9fc;
+  --surface: #ffffff;
+  --surface-2: #e8eef5;
+}
+:root[data-theme="dark"][data-accent="ocean"] {
+  --citrus: #60a5fa;
+  --paper: #0f161d;
+  --surface: #16222d;
+  --surface-2: #1c2c3a;
+}
+:root[data-accent="sunset"] {
+  --citrus: #ff7a59;
+  --paper: #fdf8f5;
+  --surface: #ffffff;
+  --surface-2: #f7e9e2;
+}
+:root[data-theme="dark"][data-accent="sunset"] {
+  --citrus: #ff9a7a;
+  --paper: #1c1310;
+  --surface: #241a15;
+  --surface-2: #2e211a;
+}
+:root[data-accent="violet"] {
+  --citrus: #8b5cf6;
+  --paper: #f8f7fd;
+  --surface: #ffffff;
+  --surface-2: #ece9f7;
+}
+:root[data-theme="dark"][data-accent="violet"] {
+  --citrus: #a78bfa;
+  --paper: #151222;
+  --surface: #1d1930;
+  --surface-2: #261f40;
+}
+:root[data-accent="mint"] {
+  --citrus: #10b981;
+  --paper: #f5faf7;
+  --surface: #ffffff;
+  --surface-2: #e6f1ea;
+}
+:root[data-theme="dark"][data-accent="mint"] {
+  --citrus: #34d399;
+  --paper: #101a14;
+  --surface: #16241b;
+  --surface-2: #1d2f24;
+}
+:root[data-accent="rose"] {
+  --citrus: #ec4899;
+  --paper: #fdf7f9;
+  --surface: #ffffff;
+  --surface-2: #f8e8ef;
+}
+:root[data-theme="dark"][data-accent="rose"] {
+  --citrus: #f472b6;
+  --paper: #1d1218;
+  --surface: #281a22;
+  --surface-2: #33222c;
+}
 * {
   box-sizing: border-box;
 }

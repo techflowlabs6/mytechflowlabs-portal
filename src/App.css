@@ -2233,3 +2233,212 @@
     display: none;
   }
 }
+
+/* ---- Batch 4 owner tools: theme editor, scratchpad, renewal
+   calendar, duplicate links, messages inbox ---- */
+
+/* Batch 4 admin tools: theme editor, scratchpad, renewals, duplicate
+   links, inbox. Admin-only sections under the publish toolbar. */
+.admin-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.admin-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+.admin-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.admin-section > p {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.admin-section input,
+.admin-section select,
+.admin-section textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 13px;
+  min-height: 44px;
+  outline: none;
+}
+.admin-section input:focus,
+.admin-section select:focus,
+.admin-section textarea:focus {
+  border-color: #799e26;
+  box-shadow: 0 0 0 3px #c7f13c35;
+}
+.admin-section textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.form-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.form-row > * {
+  flex: 1 1 180px;
+}
+.admin-section-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.preset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--field);
+  color: var(--ink);
+  padding: 8px 14px 8px 10px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.preset-btn.is-active {
+  border-color: var(--citrus);
+  box-shadow: 0 0 0 2px var(--citrus);
+}
+.preset-dots {
+  display: inline-flex;
+}
+.preset-dots span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #00000022;
+}
+.preset-dots span + span {
+  margin-left: -5px;
+}
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.admin-list-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.admin-list-item > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-list-item p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+.admin-list-meta {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.admin-list-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.admin-list-actions .button {
+  padding: 8px 10px;
+}
+.admin-empty {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.status-badge--overdue {
+  background: #f9ece9;
+  color: #a1332c;
+}
+.status-badge--soon {
+  background: #fff4db;
+  color: #72511b;
+}
+.status-badge--watch {
+  background: #e8eef5;
+  color: #33506e;
+}
+.status-badge--ok {
+  background: #e5efdc;
+  color: #284323;
+}
+.status-badge--nodate {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.dup-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f9ece9;
+  color: #a1332c;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 650;
+}
+.type-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.message-item.is-unread {
+  border-left: 3px solid var(--citrus);
+  padding-left: 12px;
+}
+.message-item.is-unread > div:first-child > strong {
+  font-weight: 800;
+}

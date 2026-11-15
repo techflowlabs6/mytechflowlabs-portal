@@ -57,6 +57,7 @@ import {
 } from "./lib/portalState.js";
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
+import { applyAccent, readAccent, writeAccent } from "./lib/accentTheme.js";
 import { readVideosOpen, writeVideosOpen } from "./lib/uiPrefs.js";
 import {
   effectiveCounts,
@@ -670,6 +671,7 @@ export default function App() {
         window.matchMedia?.("(prefers-color-scheme: dark)").matches,
     ),
   );
+  const [accent, setAccent] = useState(() => readAccent(storage()));
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("featured");
@@ -762,6 +764,12 @@ export default function App() {
     applyTheme(theme);
     writeTheme(storage(), theme);
   }, [theme]);
+
+  // Accent preset: apply to <html> and remember the choice on this device.
+  useEffect(() => {
+    applyAccent(accent);
+    writeAccent(storage(), accent);
+  }, [accent]);
 
   // Language: remember the choice on this device.
   useEffect(() => {
@@ -1749,6 +1757,9 @@ export default function App() {
               launches={effectiveLaunches}
               likes={effectiveLikes}
               shared={sharedStats.shared}
+              accent={accent}
+              onAccentChange={setAccent}
+              publishToken={publishToken}
             />
           )}
           {filtered.length ? (
