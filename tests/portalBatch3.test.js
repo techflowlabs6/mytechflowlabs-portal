@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import uptimeHandler, { checkApp, parseAppsPayload } from "../api/uptime.js";
-import domainsHandler, { parseRdap } from "../api/domains.js";
+import domainsHandler, { parseRdap, rdapUrlFor } from "../api/domains.js";
 import {
   DOMAINS_KEY,
   barWidth,
@@ -102,7 +102,28 @@ test("uptime: checkApp falls back to GET when HEAD answers 405", async () => {
     { id: "a", name: "A", url: "https://example.com/" },
     async (_url, options) => {
       methods.push(options.method);
-      return mockResponse({ status: methods.length === 1 ? 405 : 200 });
+      // ok mirrors a real fetch (2xx only): 405 is not ok.
+      const status = methods.length === 1 ? 405 : 200;
+      return mockResponse({ ok: status >= 200 && status < 300, status });
+    },
+  );
+  assert.deepEqual(methods, ["HEAD", "GET"]);
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 200);
+});
+
+test("uptime: checkApp falls back to GET when HEAD answers 404 (Lexi case)", async () => {
+  // Lexi lives on ChatGPT Sites: HEAD answers 404 while GET is 200.
+  // Falling back only on 405 misreported it as down on the live site.
+  const methods = [];
+  const result = await checkApp(
+    { id: "lexi", name: "Lexi", url: "https://lexi.mytechflowlabs.com/" },
+    async (_url, options) => {
+      methods.push(options.method);
+      return mockResponse({
+        ok: methods.length > 1,
+        status: methods.length === 1 ? 404 : 200,
+      });
     },
   );
   assert.deepEqual(methods, ["HEAD", "GET"]);
@@ -133,8 +154,10 @@ test("uptime: handler checks every catalog app in parallel", async (t) => {
   globalThis.fetch = async (url, options) => {
     seen.push([url, options?.method]);
     // A 500 for the driver app, 200 for everything else.
+    // ok mirrors a real fetch (2xx only), so the driver's HEAD 500
+    // triggers the GET fallback, exactly like the live Lexi case.
     const status = url.includes("driver.mytechflowlabs.com") ? 500 : 200;
-    return mockResponse({ status });
+    return mockResponse({ ok: status >= 200 && status < 300, status });
   };
   t.after(() => {
     globalThis.fetch = realFetch;
@@ -155,7 +178,20 @@ test("uptime: handler checks every catalog app in parallel", async (t) => {
     body.results.filter((row) => row.ok).length,
     8,
   );
-  assert.equal(seen.every(([ , method]) => method === "HEAD"), true);
+  // Eight healthy apps are HEAD-only; the driver's HEAD 500 falls back
+  // to a GET (which also 500s), so there is exactly one GET call.
+  assert.equal(
+    seen.filter(([, method]) => method === "HEAD").length,
+    9,
+  );
+  assert.equal(
+    seen.filter(([, method]) => method === "GET").length,
+    1,
+  );
+  assert.equal(
+    seen.find(([, method]) => method === "GET")[0].includes("driver."),
+    true,
+  );
 });
 
 test("uptime: handler rejects non-GET with 405", async () => {
@@ -215,10 +251,36 @@ test("domains: parseRdap handles a reply with no expiry and no registrar", () =>
   });
 });
 
+test("domains: rdapUrlFor routes each TLD to its authoritative registry", () => {
+  assert.equal(
+    rdapUrlFor("mytechflowlabs.com"),
+    "https://rdap.verisign.com/com/v1/domain/mytechflowlabs.com",
+  );
+  assert.equal(
+    rdapUrlFor("example.net"),
+    "https://rdap.verisign.com/net/v1/domain/example.net",
+  );
+  assert.equal(
+    rdapUrlFor("example.org"),
+    "https://rdap.publicinterestregistry.org/rdap/domain/example.org",
+  );
+  assert.equal(
+    rdapUrlFor("example.ca"),
+    "https://rdap.ca.fury.ca/rdap/domain/example.ca",
+  );
+  assert.equal(
+    rdapUrlFor("example.xyz"),
+    "https://rdap.org/domain/example.xyz",
+  );
+});
+
 test("domains: handler returns expiry for a known domain", async (t) => {
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
-    assert.equal(url, "https://rdap.org/domain/mytechflowlabs.com");
+    assert.equal(
+      url,
+      "https://rdap.verisign.com/com/v1/domain/mytechflowlabs.com",
+    );
     return mockResponse({ jsonData: RDAP_SAMPLE });
   };
   t.after(() => {

@@ -10,7 +10,10 @@
  * the function bundle does not carry the public folder.
  *
  * Each app is fetched with HEAD and a 5 second timeout, falling back
- * to GET when a host answers 405 to HEAD. All checks run in parallel.
+ * to GET whenever HEAD doesn't answer 2xx — some hosts (e.g. ChatGPT
+ * Sites, where Lexi lives) answer 404 to HEAD while GET is 200, so
+ * falling back only on 405 misreports those apps as down. All checks
+ * run in parallel.
  *
  * GET /api/uptime
  *   -> { checkedAt, results: [{ id, name, url, ok, status, ms }] }
@@ -65,7 +68,7 @@ export async function checkApp(app, fetchFn = fetch) {
   const started = Date.now();
   try {
     let response = await fetchWithTimeout(app.url, "HEAD", fetchFn);
-    if (response.status === 405) {
+    if (!response.ok) {
       response = await fetchWithTimeout(app.url, "GET", fetchFn);
     }
     const ms = Date.now() - started;

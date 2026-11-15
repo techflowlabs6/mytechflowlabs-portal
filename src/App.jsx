@@ -58,6 +58,7 @@ import {
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
 import { applyAccent, readAccent, writeAccent } from "./lib/accentTheme.js";
+import { readVideosOpen, writeVideosOpen } from "./lib/uiPrefs.js";
 import {
   effectiveCounts,
   fetchSharedStats,
@@ -81,6 +82,7 @@ import {
   validateImageFile,
 } from "./lib/imageUpload.js";
 import AdminTools from "./components/AdminTools.jsx";
+import ProfileView from "./components/ProfileView.jsx";
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
@@ -590,49 +592,71 @@ function ChangelogView({ entries, failed, lang }) {
 }
 
 function VideosRow({ videos, lang }) {
+  const [open, setOpen] = useState(() => readVideosOpen(storage()));
   if (!videos.length) return null;
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    writeVideosOpen(storage(), next);
+  };
   return (
     <section className="videos" aria-labelledby="videos-title">
-      <h2 id="videos-title">{t(lang, "videosTitle")}</h2>
-      <p>{t(lang, "videosNote")}</p>
-      <div className="videos-row">
-        {videos.map((video) => (
+      <div className="videos-head">
+        <h2 id="videos-title">{t(lang, "videosTitle")}</h2>
+        <button
+          type="button"
+          className="videos-toggle"
+          aria-expanded={open}
+          aria-controls="videos-body"
+          onClick={toggle}
+        >
+          {open ? t(lang, "videosHide") : t(lang, "videosShow")}
+          <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+        </button>
+      </div>
+      {open && (
+        <>
+          <p>{t(lang, "videosNote")}</p>
+          <div id="videos-body" className="videos-row">
+            {videos.map((video) => (
+              <a
+                key={video.id}
+                className="video-card"
+                href={video.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {video.thumbnail && (
+                  <img
+                    src={video.thumbnail}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
+                <span className="video-title">{video.title}</span>
+                {video.publishedAt && (
+                  <time dateTime={video.publishedAt}>
+                    {new Date(video.publishedAt).toLocaleDateString(
+                      lang === "fr" ? "fr-FR" : "en-CA",
+                      { year: "numeric", month: "short", day: "numeric" },
+                    )}
+                  </time>
+                )}
+              </a>
+            ))}
+          </div>
           <a
-            key={video.id}
-            className="video-card"
-            href={video.url}
+            className="button button--quiet"
+            href="https://www.youtube.com/@TechFlowLabs"
             target="_blank"
             rel="noopener noreferrer"
           >
-            {video.thumbnail && (
-              <img
-                src={video.thumbnail}
-                alt=""
-                loading="lazy"
-                decoding="async"
-              />
-            )}
-            <span className="video-title">{video.title}</span>
-            {video.publishedAt && (
-              <time dateTime={video.publishedAt}>
-                {new Date(video.publishedAt).toLocaleDateString(
-                  lang === "fr" ? "fr-FR" : "en-CA",
-                  { year: "numeric", month: "short", day: "numeric" },
-                )}
-              </time>
-            )}
+            {t(lang, "watchOnYouTube")}
+            <ArrowUpRight size={16} aria-hidden="true" />
           </a>
-        ))}
-      </div>
-      <a
-        className="button button--quiet"
-        href="https://www.youtube.com/@TechFlowLabs"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {t(lang, "watchOnYouTube")}
-        <ArrowUpRight size={16} aria-hidden="true" />
-      </a>
+        </>
+      )}
     </section>
   );
 }
@@ -898,13 +922,18 @@ export default function App() {
     };
   }, [menuOpen]);
 
-  // Hash pages: #/about and #/changelog open those pages, #/app/<id>
-  // opens that app's details, anything else shows the catalog.
+  // Hash pages: #/about, #/profile and #/changelog open those pages,
+  // #/app/<id> opens that app's details, anything else shows the catalog.
   useEffect(() => {
     const openFromHash = () => {
       const hash = window.location.hash || "";
       if (hash === "#/about") {
         setView("about");
+        setModal(null);
+        return;
+      }
+      if (hash === "#/profile") {
+        setView("profile");
         setModal(null);
         return;
       }
@@ -1344,6 +1373,17 @@ export default function App() {
         {t(lang, "navAbout")}
       </a>
       <a
+        href="#/profile"
+        className={`nav-link ${view === "profile" ? "nav-link--active" : ""}`}
+        aria-current={view === "profile" ? "page" : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          goToView("profile");
+        }}
+      >
+        {t(lang, "navProfile")}
+      </a>
+      <a
         href="#/changelog"
         className={`nav-link ${view === "changelog" ? "nav-link--active" : ""}`}
         aria-current={view === "changelog" ? "page" : undefined}
@@ -1443,6 +1483,15 @@ export default function App() {
         >
           {view === "about" ? (
             <AboutView apps={apps} lang={lang} />
+          ) : view === "profile" ? (
+            <ProfileView
+              apps={apps}
+              launches={effectiveLaunches}
+              likes={effectiveLikes}
+              shared={sharedStats.shared}
+              lang={lang}
+              socials={SOCIAL_LINKS}
+            />
           ) : view === "changelog" ? (
             <ChangelogView
               entries={changelog}
@@ -1822,6 +1871,15 @@ export default function App() {
               }}
             >
               {t(lang, "navAbout")}
+            </a>
+            <a
+              href="#/profile"
+              onClick={(event) => {
+                event.preventDefault();
+                goToView("profile");
+              }}
+            >
+              {t(lang, "navProfile")}
             </a>
             <a
               href="#/changelog"
