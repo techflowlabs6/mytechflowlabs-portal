@@ -196,4 +196,16 @@ test("PWA shell files exist: manifest with icons, service worker, robots, sitema
     "utf8",
   );
   assert.ok(sitemap.includes("https://mytechflowlabs.com/"));
+  // Icons are stored as base64 text and decoded at build time
+  // (scripts/decode-icons.mjs) — the decoded bytes must be real PNGs.
+  for (const size of [192, 512]) {
+    const bytes = Buffer.from(
+      fs.readFileSync(
+        new URL(`../public/icon-${size}.png.b64`, import.meta.url),
+        "utf8",
+      ),
+      "base64",
+    );
+    assert.equal(bytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+  }
 });
