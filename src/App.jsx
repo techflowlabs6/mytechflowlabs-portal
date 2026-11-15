@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Code2,
   Download,
+  Heart,
   History,
   Info,
   Lightbulb,
@@ -57,6 +58,22 @@ import {
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
 import {
+  effectiveCounts,
+  fetchSharedStats,
+  formatCount,
+  readLikedIds,
+  recordSharedEvent,
+  toggleLikedLocal,
+} from "./lib/stats.js";
+import {
+  categoryLabelLocalized,
+  localizeApp,
+  readLang,
+  statusLabelLocalized,
+  t,
+  writeLang,
+} from "./lib/i18n.js";
+import {
   MAX_UPLOAD_BYTES,
   compressImageFile,
   dataUrlBytes,
@@ -86,8 +103,23 @@ const session = () => {
     return null;
   }
 };
-const categoryLabel = (category) =>
-  category === "3D Games & Arcade" ? "Arcade" : category;
+function LangToggle({ lang, onChange }) {
+  return (
+    <div className="lang-toggle" role="group" aria-label="Language / Langue">
+      {["en", "fr"].map((value) => (
+        <button
+          key={value}
+          type="button"
+          className={`lang-toggle-button ${lang === value ? "is-active" : ""}`}
+          aria-pressed={lang === value}
+          onClick={() => onChange(value)}
+        >
+          {value.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ThemeToggle({ theme, onToggle }) {
   const dark = theme === "dark";
@@ -178,28 +210,26 @@ function Dialog({ title, onClose, children, className = "" }) {
   );
 }
 
-function ContactForm({ kind, status, onSubmit }) {
+function ContactForm({ kind, status, onSubmit, lang }) {
   const isRequest = kind === "request";
   return (
     <form onSubmit={(event) => onSubmit(event, kind)}>
       <p className="dialog-intro">
-        {isRequest
-          ? "Tell me what to build next — one line is enough."
-          : "Questions, feedback or business — every message gets read."}
+        {isRequest ? t(lang, "requestIntro") : t(lang, "contactIntro")}
       </p>
       <div className="form-field">
-        <label htmlFor="contact-name">Your name</label>
+        <label htmlFor="contact-name">{t(lang, "yourName")}</label>
         <input
           id="contact-name"
           name="name"
           maxLength={120}
           autoComplete="name"
-          placeholder="Your name"
+          placeholder={t(lang, "yourName")}
         />
       </div>
       <div className="form-field">
         <label htmlFor="contact-email">
-          Email {kind === "message" ? "(optional — so I can reply)" : ""}
+          Email {kind === "message" ? t(lang, "emailOptional") : ""}
         </label>
         <input
           id="contact-email"
@@ -211,7 +241,7 @@ function ContactForm({ kind, status, onSubmit }) {
       </div>
       <div className="form-field">
         <label htmlFor="contact-message">
-          {isRequest ? "Your app idea *" : "Message *"}
+          {isRequest ? t(lang, "ideaLabel") : t(lang, "messageLabel")}
         </label>
         <textarea
           id="contact-message"
@@ -220,9 +250,7 @@ function ContactForm({ kind, status, onSubmit }) {
           required
           maxLength={2000}
           placeholder={
-            isRequest
-              ? "e.g. A Pomodoro timer that syncs with TimeLog…"
-              : "Hi…"
+            isRequest ? t(lang, "ideaPlaceholder") : t(lang, "messagePlaceholder")
           }
         />
       </div>
@@ -238,10 +266,10 @@ function ContactForm({ kind, status, onSubmit }) {
       >
         <Send size={16} />
         {status.state === "sending"
-          ? "Sending…"
+          ? t(lang, "sending")
           : isRequest
-            ? "Send app idea"
-            : "Send message"}
+            ? t(lang, "sendIdea")
+            : t(lang, "sendMessage")}
       </button>
     </form>
   );
@@ -295,12 +323,34 @@ function AppCard({
   onDetails,
   onLaunch,
   onCopyLink,
+  lang,
+  launches,
+  likes,
+  liked,
+  onToggleLike,
 }) {
   const [artReady, setArtReady] = useState(false);
   const artwork = defaultArtwork(app);
   const light = artwork === 2 || artwork === 8;
   const url = safeWebUrl(app.url);
   const hasArtwork = artwork !== null || Boolean(safeImageUrl(app.imageUrl));
+  // Visible text in the visitor's language; ids and URLs stay raw so
+  // admin edits never save a translated copy over the original.
+  const display = localizeApp(app, lang);
+  const stats = [
+    launches > 0
+      ? t(lang, launches === 1 ? "launchOne" : "launchMany", {
+          n: formatCount(launches),
+        })
+      : "",
+    likes > 0
+      ? t(lang, likes === 1 ? "likeOne" : "likeMany", {
+          n: formatCount(likes),
+        })
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <article
       className={`app-card ${light ? "app-card--light" : ""} ${isAdmin ? "app-card--admin" : ""} ${artReady || !hasArtwork ? "art-ready" : ""}`}
@@ -323,22 +373,44 @@ function AppCard({
         onClick={() => onLaunch(app)}
       >
         <div className="card-heading">
-          <span className="eyebrow">{categoryLabel(app.category)}</span>
-          {isNewApp(app) && <span className="new-label">New</span>}
+          <span className="eyebrow">
+            {categoryLabelLocalized(display.category, lang)}
+          </span>
+          {isNewApp(app) && (
+            <span className="new-label">{t(lang, "newBadge")}</span>
+          )}
           {app.status && app.status !== "live" && (
             <span className="status-label">
-              {STATUS_LABELS[app.status] || app.status}
+              {statusLabelLocalized(app.status, lang)}
             </span>
           )}
         </div>
-        <h3>{app.name}</h3>
-        {app.shortNote && <p className="card-note">{app.shortNote}</p>}
+        <h3>{display.name}</h3>
+        {display.shortNote && <p className="card-note">{display.shortNote}</p>}
+        {stats && (
+          <p className="card-stats" aria-label={stats}>
+            {stats}
+          </p>
+        )}
         <span className="launch-button">
-          {url ? "Launch app" : "Link unavailable"}
+          {url ? t(lang, "launchApp") : t(lang, "linkUnavailable")}
           <ArrowUpRight size={16} aria-hidden="true" />
         </span>
       </a>
       <div className="card-tools">
+        <button
+          className={`card-tool like-button ${liked ? "is-liked" : ""}`}
+          onClick={() => onToggleLike(app)}
+          aria-pressed={liked}
+          aria-label={
+            liked
+              ? `${t(lang, "liked")}: ${app.name}`
+              : `${t(lang, "like")}: ${app.name}`
+          }
+          title={liked ? t(lang, "liked") : t(lang, "like")}
+        >
+          <Heart size={17} fill={liked ? "currentColor" : "none"} />
+        </button>
         <button
           className="card-tool"
           onClick={() => onCopyLink(app)}
@@ -380,15 +452,29 @@ function AppCard({
   );
 }
 
-function Spotlight({ app, onLaunch, onDetails }) {
+function Spotlight({ app, onLaunch, onDetails, lang, launches, likes }) {
   const [artReady, setArtReady] = useState(false);
   const artwork = defaultArtwork(app);
   const url = safeWebUrl(app.url);
+  const stats = [
+    launches > 0
+      ? t(lang, launches === 1 ? "launchOne" : "launchMany", {
+          n: formatCount(launches),
+        })
+      : "",
+    likes > 0
+      ? t(lang, likes === 1 ? "likeOne" : "likeMany", {
+          n: formatCount(likes),
+        })
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <section className="spotlight" aria-labelledby="spotlight-title">
       <span className="spotlight-label">
         <Star size={14} aria-hidden="true" />
-        Featured
+        {t(lang, "featuredBadge")}
       </span>
       <div className="spotlight-inner">
         <div className={`spotlight-art ${artReady ? "art-ready" : ""}`}>
@@ -405,6 +491,7 @@ function Spotlight({ app, onLaunch, onDetails }) {
           {app.description && (
             <p className="spotlight-desc">{app.description}</p>
           )}
+          {stats && <p className="spotlight-stats">{stats}</p>}
           <div className="spotlight-actions">
             {url ? (
               <a
@@ -414,7 +501,7 @@ function Spotlight({ app, onLaunch, onDetails }) {
                 rel="noopener noreferrer"
                 onClick={() => onLaunch(app)}
               >
-                Launch app
+                {t(lang, "launchApp")}
                 <ArrowUpRight size={16} aria-hidden="true" />
               </a>
             ) : null}
@@ -423,11 +510,127 @@ function Spotlight({ app, onLaunch, onDetails }) {
               type="button"
               onClick={() => onDetails(app)}
             >
-              App details
+              {t(lang, "detailsButton")}
             </button>
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+function AboutView({ apps, lang }) {
+  return (
+    <div className="page-view">
+      <h2>{t(lang, "navAbout")}</h2>
+      <p className="page-lead">{t(lang, "aboutLead")}</p>
+      <p>{t(lang, "aboutP1")}</p>
+      <p>{t(lang, "aboutP2")}</p>
+      <p className="page-stats">
+        <strong>{apps.length}</strong> {t(lang, "aboutApps")} ·{" "}
+        <strong>{CATEGORIES.length - 1}</strong>{" "}
+        {t(lang, "aboutCategories")}
+      </p>
+      <a
+        className="button button--primary"
+        href="https://www.youtube.com/@TechFlowLabs"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t(lang, "aboutVisitChannel")}
+        <ArrowUpRight size={16} aria-hidden="true" />
+      </a>
+    </div>
+  );
+}
+
+function ChangelogView({ entries, failed, lang }) {
+  return (
+    <div className="page-view">
+      <h2>{t(lang, "changelogTitle")}</h2>
+      <p className="page-lead">{t(lang, "changelogNote")}</p>
+      {failed ? (
+        <p>{t(lang, "changelogEmpty")}</p>
+      ) : entries === null ? (
+        <p>{t(lang, "loading")}</p>
+      ) : entries.length === 0 ? (
+        <p>{t(lang, "changelogEmpty")}</p>
+      ) : (
+        <ol className="changelog-list">
+          {entries.map((entry) => (
+            <li
+              key={`${entry.date}-${entry.title}`}
+              className="changelog-entry"
+            >
+              <time dateTime={entry.date}>
+                {new Date(`${entry.date}T00:00:00`).toLocaleDateString(
+                  lang === "fr" ? "fr-FR" : "en-CA",
+                  { year: "numeric", month: "long", day: "numeric" },
+                )}
+              </time>
+              <h3>
+                {lang === "fr" && entry.titleFr ? entry.titleFr : entry.title}
+              </h3>
+              <ul>
+                {(lang === "fr" && entry.itemsFr?.length
+                  ? entry.itemsFr
+                  : entry.items
+                ).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+function VideosRow({ videos, lang }) {
+  if (!videos.length) return null;
+  return (
+    <section className="videos" aria-labelledby="videos-title">
+      <h2 id="videos-title">{t(lang, "videosTitle")}</h2>
+      <p>{t(lang, "videosNote")}</p>
+      <div className="videos-row">
+        {videos.map((video) => (
+          <a
+            key={video.id}
+            className="video-card"
+            href={video.url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {video.thumbnail && (
+              <img
+                src={video.thumbnail}
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+            <span className="video-title">{video.title}</span>
+            {video.publishedAt && (
+              <time dateTime={video.publishedAt}>
+                {new Date(video.publishedAt).toLocaleDateString(
+                  lang === "fr" ? "fr-FR" : "en-CA",
+                  { year: "numeric", month: "short", day: "numeric" },
+                )}
+              </time>
+            )}
+          </a>
+        ))}
+      </div>
+      <a
+        className="button button--quiet"
+        href="https://www.youtube.com/@TechFlowLabs"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {t(lang, "watchOnYouTube")}
+        <ArrowUpRight size={16} aria-hidden="true" />
+      </a>
     </section>
   );
 }
@@ -448,6 +651,22 @@ export default function App() {
   const [launchCounts, setLaunchCounts] = useState(() =>
     readLaunchCounts(storage()),
   );
+  const [lang, setLang] = useState(() =>
+    readLang(
+      storage(),
+      typeof navigator !== "undefined" ? navigator.language : "",
+    ),
+  );
+  const [sharedStats, setSharedStats] = useState({
+    shared: false,
+    launches: {},
+    likes: {},
+  });
+  const [likedIds, setLikedIds] = useState(() => readLikedIds(storage()));
+  const [videos, setVideos] = useState([]);
+  const [view, setView] = useState("apps");
+  const [changelog, setChangelog] = useState(null);
+  const [changelogFailed, setChangelogFailed] = useState(false);
   const [catalogUpdatedAt, setCatalogUpdatedAt] = useState("");
   const [copiedId, setCopiedId] = useState("");
   const [contactStatus, setContactStatus] = useState({
@@ -485,10 +704,15 @@ export default function App() {
   const menuButtonRef = useRef(null);
   const searchRef = useRef(null);
   const firstAppsWrite = useRef(true);
+  // Shared totals win when Vercel KV is live; otherwise this device's
+  // own counts are shown. See src/lib/stats.js.
+  const effective = effectiveCounts(launchCounts, likedIds, sharedStats);
+  const effectiveLaunches = effective.launches;
+  const effectiveLikes = effective.likes;
   const filtered = sortApps(
     filterApps(apps, search, category),
     sort,
-    launchCounts,
+    effectiveLaunches,
   );
   const isFiltered = Boolean(search.trim()) || category !== "All";
   const featuredApp =
@@ -499,12 +723,80 @@ export default function App() {
     )
     .filter((app) => (launchCounts[app.id] || 0) > 0)
     .slice(0, 4);
+  const mostLoved = [...apps]
+    .sort(
+      (a, b) => (effectiveLikes[b.id] || 0) - (effectiveLikes[a.id] || 0),
+    )
+    .filter((app) => (effectiveLikes[app.id] || 0) > 0)
+    .slice(0, 4);
+  // Detail dialog text in the visitor's language (ids/URLs stay raw).
+  const detailDisplay = detailApp ? localizeApp(detailApp, lang) : null;
 
   // Theme: apply to <html> and remember the choice on this device.
   useEffect(() => {
     applyTheme(theme);
     writeTheme(storage(), theme);
   }, [theme]);
+
+  // Language: remember the choice on this device.
+  useEffect(() => {
+    writeLang(storage(), lang);
+  }, [lang]);
+
+  // Shared counts: fetch the KV totals for the current catalog. When the
+  // endpoint is not configured (501) or unreachable, sharedStats stays
+  // { shared: false } and the device's own counts are shown instead.
+  const refreshStats = async () => {
+    const stats = await fetchSharedStats(apps.map((app) => app.id));
+    setSharedStats(stats);
+  };
+  useEffect(() => {
+    refreshStats();
+    // The catalog identity changes when apps are adopted or edited.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apps]);
+
+  // Latest videos from the channel, once per visit.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/videos");
+        if (!response.ok || cancelled) return;
+        const data = await response.json();
+        if (!cancelled)
+          setVideos(Array.isArray(data.videos) ? data.videos : []);
+      } catch {
+        /* Videos are a bonus section; the page works without them. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Changelog: loaded only when the page is opened.
+  useEffect(() => {
+    if (view !== "changelog" || changelog !== null || changelogFailed) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/changelog.json", {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("changelog unavailable");
+        const data = await response.json();
+        if (cancelled) return;
+        const entries = Array.isArray(data) ? data : data?.entries;
+        setChangelog(Array.isArray(entries) ? entries : []);
+      } catch {
+        if (!cancelled) setChangelogFailed(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [view, changelog, changelogFailed]);
 
   // Permanent catalog: adopt the GitHub-committed public/apps.json when it
   // is newer than this device's copy (or when this device has no copy yet).
@@ -597,11 +889,26 @@ export default function App() {
     };
   }, [menuOpen]);
 
-  // Deep link: mytechflowlabs.com/#/app/<id> opens that app's details.
+  // Hash pages: #/about and #/changelog open those pages, #/app/<id>
+  // opens that app's details, anything else shows the catalog.
   useEffect(() => {
     const openFromHash = () => {
-      const match = /^#\/app\/(.+)$/.exec(window.location.hash || "");
-      if (!match) return;
+      const hash = window.location.hash || "";
+      if (hash === "#/about") {
+        setView("about");
+        setModal(null);
+        return;
+      }
+      if (hash === "#/changelog") {
+        setView("changelog");
+        setModal(null);
+        return;
+      }
+      const match = /^#\/app\/(.+)$/.exec(hash);
+      if (!match) {
+        setView("apps");
+        return;
+      }
       const found = readApps(storage()).find(
         (item) => item.id === decodeURIComponent(match[1]),
       );
@@ -629,7 +936,7 @@ export default function App() {
   }, [modal]);
 
   const closeModal = () => {
-    if (modal === "details" && window.location.hash.startsWith("#/app/")) {
+    if (window.location.hash.startsWith("#/")) {
       window.history.replaceState(
         null,
         "",
@@ -640,6 +947,30 @@ export default function App() {
     setFormError("");
     setLoginError("");
     setContactStatus({ state: "idle", message: "" });
+  };
+  const goToView = (next) => {
+    setMenuOpen(false);
+    setModal(null);
+    setView(next);
+    try {
+      window.history.replaceState(
+        null,
+        "",
+        next === "apps"
+          ? window.location.pathname + window.location.search
+          : `#/${next}`,
+      );
+    } catch {
+      /* Hash pages are a nicety, not a requirement. */
+    }
+    // The target section only exists after the view renders.
+    setTimeout(() => {
+      if (next === "apps") {
+        document.getElementById("apps")?.scrollIntoView();
+      } else {
+        window.scrollTo(0, 0);
+      }
+    }, 50);
   };
   const openLogin = () => {
     setMenuOpen(false);
@@ -683,6 +1014,8 @@ export default function App() {
   };
   const handleLaunch = (app) => {
     setLaunchCounts(recordLaunch(storage(), app.id));
+    // Shared count: fire and forget, then refresh the displayed totals.
+    recordSharedEvent(app.id, "launch").then(() => refreshStats());
     try {
       window.gtag?.("event", "launch_app", {
         app_id: app.id,
@@ -691,6 +1024,13 @@ export default function App() {
     } catch {
       /* Analytics is optional. */
     }
+  };
+  const toggleLike = (app) => {
+    const { liked, ids } = toggleLikedLocal(storage(), app.id);
+    setLikedIds(ids);
+    recordSharedEvent(app.id, liked ? "like" : "unlike").then(() =>
+      refreshStats(),
+    );
   };
   const copyAppLink = async (app) => {
     const link =
@@ -720,25 +1060,25 @@ export default function App() {
       message: String(fields.get("message") || "").trim(),
     };
     if (!payload.message) {
-      setContactStatus({ state: "error", message: "Write a message first." });
+      setContactStatus({ state: "error", message: t(lang, "writeMessage") });
       return;
     }
     if (payload.email && !payload.email.includes("@")) {
       setContactStatus({
         state: "error",
-        message: "That email address does not look valid.",
+        message: t(lang, "invalidEmail"),
       });
       return;
     }
-    setContactStatus({ state: "sending", message: "Sending…" });
+    setContactStatus({ state: "sending", message: t(lang, "sending") });
     try {
       await sendContact(kind, payload);
       setContactStatus({
         state: "sent",
         message:
           kind === "request"
-            ? "Thanks — your app idea is in. Every one gets read."
-            : "Message sent. I'll get back to you soon.",
+            ? t(lang, "requestSent")
+            : t(lang, "contactSent"),
       });
     } catch {
       // Email sending is not set up yet: hand the filled-in message to
@@ -746,8 +1086,7 @@ export default function App() {
       window.location.href = buildContactMailto(kind, payload);
       setContactStatus({
         state: "sent",
-        message:
-          "Email sending isn't set up yet, so I opened your email app with the message pre-filled — just press send.",
+        message: t(lang, "mailtoSent"),
       });
     }
   };
@@ -757,23 +1096,23 @@ export default function App() {
     if (!email.includes("@")) {
       setNewsletterStatus({
         state: "error",
-        message: "Enter a valid email address.",
+        message: t(lang, "invalidSubscribeEmail"),
       });
       return;
     }
-    setNewsletterStatus({ state: "sending", message: "Subscribing…" });
+    setNewsletterStatus({ state: "sending", message: t(lang, "sending") });
     try {
       await sendContact("subscribe", { email });
       setNewsletterStatus({
         state: "sent",
-        message: "You're subscribed. Welcome to TechFlow Labs updates.",
+        message: t(lang, "subscribedMsg"),
       });
       setNewsletterEmail("");
     } catch {
       window.location.href = buildContactMailto("subscribe", { email });
       setNewsletterStatus({
         state: "sent",
-        message: "Opening your email app to finish subscribing…",
+        message: t(lang, "mailtoSubscribe"),
       });
     }
   };
@@ -975,17 +1314,39 @@ export default function App() {
     <>
       <a
         href="#apps"
-        className="nav-link nav-link--active"
-        aria-current="page"
-        onClick={() => setMenuOpen(false)}
+        className={`nav-link ${view === "apps" ? "nav-link--active" : ""}`}
+        aria-current={view === "apps" ? "page" : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          goToView("apps");
+        }}
       >
-        Apps
+        {t(lang, "navApps")}
       </a>
-      <button
-        className="nav-link"
-        onClick={() => openContact("message")}
+      <a
+        href="#/about"
+        className={`nav-link ${view === "about" ? "nav-link--active" : ""}`}
+        aria-current={view === "about" ? "page" : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          goToView("about");
+        }}
       >
-        Contact
+        {t(lang, "navAbout")}
+      </a>
+      <a
+        href="#/changelog"
+        className={`nav-link ${view === "changelog" ? "nav-link--active" : ""}`}
+        aria-current={view === "changelog" ? "page" : undefined}
+        onClick={(event) => {
+          event.preventDefault();
+          goToView("changelog");
+        }}
+      >
+        {t(lang, "navChangelog")}
+      </a>
+      <button className="nav-link" onClick={() => openContact("message")}>
+        {t(lang, "navContact")}
         <Mail size={15} aria-hidden="true" />
       </button>
       {isAdmin ? (
@@ -996,12 +1357,12 @@ export default function App() {
             setMenuOpen(false);
           }}
         >
-          Log out
+          {t(lang, "navLogout")}
           <LogOut size={16} aria-hidden="true" />
         </button>
       ) : (
         <button className="nav-link" onClick={openLogin}>
-          Admin
+          {t(lang, "navAdmin")}
         </button>
       )}
     </>
@@ -1031,6 +1392,7 @@ export default function App() {
               setTheme((value) => (value === "dark" ? "light" : "dark"))
             }
           />
+          <LangToggle lang={lang} onChange={(value) => setLang(value)} />
           <button
             ref={menuButtonRef}
             className="icon-button menu-toggle"
@@ -1056,20 +1418,30 @@ export default function App() {
         <section className="welcome" aria-labelledby="welcome-title">
           <div className="container welcome-inner">
             <div>
-              <h1 id="welcome-title">Your apps. One place.</h1>
-              <p>Learn, focus, track and play.</p>
+              <h1 id="welcome-title">{t(lang, "heroTitle")}</h1>
+              <p>{t(lang, "heroSub")}</p>
             </div>
             <span className="welcome-label">
               <span />
-              Built by MyTechFlow Labs
+              {t(lang, "heroBuiltBy")}
             </span>
           </div>
         </section>
         <section
           className="container app-section"
           id="apps"
-          aria-labelledby="apps-title"
+          aria-labelledby={view === "apps" ? "apps-title" : undefined}
         >
+          {view === "about" ? (
+            <AboutView apps={apps} lang={lang} />
+          ) : view === "changelog" ? (
+            <ChangelogView
+              entries={changelog}
+              failed={changelogFailed}
+              lang={lang}
+            />
+          ) : (
+            <>
           {(offline || reconnected) && (
             <div
               className={`connection-notice ${offline ? "connection-notice--offline" : ""}`}
@@ -1093,7 +1465,7 @@ export default function App() {
             <div className="search-field">
               <Search size={20} aria-hidden="true" />
               <label className="sr-only" htmlFor="app-search">
-                Search apps
+                {t(lang, "searchLabel")}
               </label>
               <input
                 ref={searchRef}
@@ -1101,7 +1473,7 @@ export default function App() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search apps"
+                placeholder={t(lang, "searchPlaceholder")}
                 title="Press / to search"
                 autoComplete="off"
               />
@@ -1131,7 +1503,7 @@ export default function App() {
                     aria-pressed={category === item}
                     onClick={() => setCategory(item)}
                   >
-                    {categoryLabel(item)}
+                    {categoryLabelLocalized(item, lang)}
                   </button>
                 ))}
               </div>
@@ -1145,7 +1517,12 @@ export default function App() {
               >
                 {SORTS.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {t(lang, {
+                      featured: "sortFeatured",
+                      newest: "sortNewest",
+                      az: "sortAz",
+                      launched: "sortLaunched",
+                    }[item.value])}
                   </option>
                 ))}
               </select>
@@ -1154,7 +1531,9 @@ export default function App() {
           <div className="catalogue-heading">
             <h2 id="apps-title" aria-live="polite" aria-atomic="true">
               {filtered.length}{" "}
-              {filtered.length === 1 ? "application" : "applications"}
+              {filtered.length === 1
+                ? t(lang, "application")
+                : t(lang, "applications")}
               {isFiltered && (
                 <span className="result-total"> / {apps.length}</span>
               )}
@@ -1163,9 +1542,12 @@ export default function App() {
           </div>
           {!isFiltered && featuredApp && (
             <Spotlight
-              app={featuredApp}
+              app={localizeApp(featuredApp, lang)}
               onLaunch={handleLaunch}
               onDetails={openDetails}
+              lang={lang}
+              launches={effectiveLaunches[featuredApp.id] || 0}
+              likes={effectiveLikes[featuredApp.id] || 0}
             />
           )}
           {!isFiltered && jumpBackIn.length > 0 && (
@@ -1175,9 +1557,9 @@ export default function App() {
             >
               <h2 id="jump-back-title">
                 <History size={16} aria-hidden="true" />
-                Jump back in
+                {t(lang, "jumpBackTitle")}
               </h2>
-              <p>Your most-launched apps on this device.</p>
+              <p>{t(lang, "jumpBackNote")}</p>
               <div className="jump-back-row">
                 {jumpBackIn.map((app) => (
                   <a
@@ -1191,6 +1573,42 @@ export default function App() {
                     {app.name}
                     <span aria-label={`${launchCounts[app.id]} launches`}>
                       ×{launchCounts[app.id]}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+          {!isFiltered && mostLoved.length > 0 && (
+            <section
+              className="jump-back most-loved"
+              aria-labelledby="most-loved-title"
+            >
+              <h2 id="most-loved-title">
+                <Heart size={16} aria-hidden="true" />
+                {t(lang, "mostLovedTitle")}
+              </h2>
+              <p>{t(lang, "mostLovedNote")}</p>
+              <div className="jump-back-row">
+                {mostLoved.map((app) => (
+                  <a
+                    key={app.id}
+                    className="jump-back-chip"
+                    href={safeWebUrl(app.url) || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleLaunch(app)}
+                  >
+                    {app.name}
+                    <span
+                      aria-label={`${effectiveLikes[app.id]} likes`}
+                    >
+                      <Heart
+                        size={13}
+                        aria-hidden="true"
+                        fill="currentColor"
+                      />
+                      {formatCount(effectiveLikes[app.id] || 0)}
                     </span>
                   </a>
                 ))}
@@ -1291,6 +1709,11 @@ export default function App() {
                   onDetails={openDetails}
                   onLaunch={handleLaunch}
                   onCopyLink={copyAppLink}
+                  lang={lang}
+                  launches={effectiveLaunches[app.id] || 0}
+                  likes={effectiveLikes[app.id] || 0}
+                  liked={likedIds.includes(app.id)}
+                  onToggleLike={toggleLike}
                 />
               ))}
             </div>
@@ -1299,16 +1722,16 @@ export default function App() {
               <span className="empty-icon">
                 <Search size={28} />
               </span>
-              <h3>No apps found</h3>
+              <h3>{t(lang, "emptyTitle")}</h3>
               <p>
                 {search.trim() ? (
-                  <>Try another search or category to find your app.</>
+                  <>{t(lang, "emptySearch")}</>
                 ) : (
-                  <>There are no apps in this category yet.</>
+                  <>{t(lang, "emptyCategory")}</>
                 )}
               </p>
               <button className="button button--primary" onClick={resetFilters}>
-                Clear filters
+                {t(lang, "clearFilters")}
               </button>
               {isAdmin && !apps.length && (
                 <button
@@ -1322,7 +1745,8 @@ export default function App() {
           )}
           <div className="request-band">
             <p>
-              <strong>Missing an app?</strong> Tell me what to build next.
+              <strong>{t(lang, "requestTitle")}</strong>{" "}
+              {t(lang, "requestText")}
             </p>
             <button
               className="button button--quiet"
@@ -1330,19 +1754,20 @@ export default function App() {
               onClick={() => openContact("request")}
             >
               <Lightbulb size={16} />
-              Request an app
+              {t(lang, "requestButton")}
             </button>
           </div>
+          <VideosRow videos={videos} lang={lang} />
           <details className="capabilities" id="capabilities">
             <summary>
               <span>
                 <Code2 size={18} />
-                Engineering capabilities
+                {t(lang, "capTitle")}
               </span>
               <ChevronDown size={18} />
             </summary>
             <div className="capabilities-content">
-              <p>The craft behind our apps.</p>
+              <p>{t(lang, "capNote")}</p>
               <div className="skills-grid">
                 {SKILLS.map((skill) => (
                   <div className="skill-item" key={skill.title}>
@@ -1353,6 +1778,8 @@ export default function App() {
               </div>
             </div>
           </details>
+            </>
+          )}
         </section>
       </main>
       <footer className="site-footer">
@@ -1363,10 +1790,28 @@ export default function App() {
             </span>
             <div>
               <strong>MyTechFlow Labs</strong>
-              <p>Your apps. One place.</p>
+              <p>{t(lang, "footerTagline")}</p>
             </div>
           </div>
           <nav className="footer-links" aria-label="MyTechFlow Labs elsewhere">
+            <a
+              href="#/about"
+              onClick={(event) => {
+                event.preventDefault();
+                goToView("about");
+              }}
+            >
+              {t(lang, "navAbout")}
+            </a>
+            <a
+              href="#/changelog"
+              onClick={(event) => {
+                event.preventDefault();
+                goToView("changelog");
+              }}
+            >
+              {t(lang, "navChangelog")}
+            </a>
             {SOCIAL_LINKS.map((link) => (
               <a
                 key={link.label}
@@ -1382,7 +1827,7 @@ export default function App() {
           </nav>
           <form className="newsletter" onSubmit={submitNewsletter}>
             <label htmlFor="newsletter-email">
-              Get TechFlow Labs updates
+              {t(lang, "newsletterTitle")}
             </label>
             <div className="newsletter-row">
               <input
@@ -1399,7 +1844,7 @@ export default function App() {
                 type="submit"
                 disabled={newsletterStatus.state === "sending"}
               >
-                Subscribe
+                {t(lang, "subscribe")}
               </button>
             </div>
             {newsletterStatus.state !== "idle" && (
@@ -1415,16 +1860,19 @@ export default function App() {
             <span>© {new Date().getFullYear()} MyTechFlow Labs</span>
             {catalogUpdatedAt && (
               <span>
-                Catalog updated{" "}
-                {new Date(catalogUpdatedAt).toLocaleDateString(undefined, {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
+                {t(lang, "catalogUpdated")}{" "}
+                {new Date(catalogUpdatedAt).toLocaleDateString(
+                  lang === "fr" ? "fr-FR" : undefined,
+                  {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  },
+                )}
               </span>
             )}
             <a href="#top" className="back-to-top">
-              Back to top
+              {t(lang, "backToTop")}
               <ArrowUp size={14} aria-hidden="true" />
             </a>
           </div>
@@ -1695,12 +2143,13 @@ export default function App() {
             kind={modal}
             status={contactStatus}
             onSubmit={submitContactForm}
+            lang={lang}
           />
         </Dialog>
       )}
-      {modal === "details" && detailApp && (
+      {modal === "details" && detailApp && detailDisplay && (
         <Dialog
-          title={detailApp.name}
+          title={detailDisplay.name}
           onClose={closeModal}
           className="dialog--wide"
         >
@@ -1714,33 +2163,64 @@ export default function App() {
           </div>
           <div className="detail-badges">
             <span className="detail-category">
-              {categoryLabel(detailApp.category)}
+              {categoryLabelLocalized(detailDisplay.category, lang)}
             </span>
-            {isNewApp(detailApp) && <span className="new-label">New</span>}
+            {isNewApp(detailApp) && (
+              <span className="new-label">{t(lang, "newBadge")}</span>
+            )}
             {detailApp.status && detailApp.status !== "live" && (
               <span className="status-label">
-                {STATUS_LABELS[detailApp.status] || detailApp.status}
+                {statusLabelLocalized(detailApp.status, lang)}
               </span>
             )}
             {detailApp.featured && (
               <span className="featured-label">
                 <Star size={12} aria-hidden="true" />
-                Featured
+                {t(lang, "featuredBadge")}
               </span>
             )}
           </div>
-          {detailApp.shortNote && (
-            <p className="detail-note">{detailApp.shortNote}</p>
+          {detailDisplay.shortNote && (
+            <p className="detail-note">{detailDisplay.shortNote}</p>
           )}
           <p className="detail-description">
-            {detailApp.description || "Open the app to explore more."}
+            {detailDisplay.description || t(lang, "detailFallback")}
           </p>
-          {Array.isArray(detailApp.features) &&
-            detailApp.features.length > 0 && (
+          {(effectiveLaunches[detailApp.id] > 0 ||
+            effectiveLikes[detailApp.id] > 0) && (
+            <p className="detail-stats">
+              {[
+                effectiveLaunches[detailApp.id] > 0
+                  ? t(
+                      lang,
+                      effectiveLaunches[detailApp.id] === 1
+                        ? "launchOne"
+                        : "launchMany",
+                      { n: formatCount(effectiveLaunches[detailApp.id]) },
+                    )
+                  : "",
+                effectiveLikes[detailApp.id] > 0
+                  ? t(
+                      lang,
+                      effectiveLikes[detailApp.id] === 1
+                        ? "likeOne"
+                        : "likeMany",
+                      { n: formatCount(effectiveLikes[detailApp.id]) },
+                    )
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+          {Array.isArray(detailDisplay.features) &&
+            detailDisplay.features.length > 0 && (
               <>
-                <h3 className="detail-subheading">What&apos;s inside</h3>
+                <h3 className="detail-subheading">
+                  {t(lang, "whatsInside")}
+                </h3>
                 <ul className="detail-features">
-                  {detailApp.features.map((feature) => (
+                  {detailDisplay.features.map((feature) => (
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
@@ -1755,7 +2235,7 @@ export default function App() {
                 rel="noopener noreferrer"
                 onClick={() => handleLaunch(detailApp)}
               >
-                Launch app
+                {t(lang, "launchApp")}
                 <ArrowUpRight size={18} />
               </a>
             ) : (
@@ -1766,17 +2246,33 @@ export default function App() {
             <button
               className="button button--quiet"
               type="button"
+              onClick={() => toggleLike(detailApp)}
+              aria-pressed={likedIds.includes(detailApp.id)}
+            >
+              <Heart
+                size={16}
+                fill={
+                  likedIds.includes(detailApp.id) ? "currentColor" : "none"
+                }
+              />
+              {likedIds.includes(detailApp.id)
+                ? t(lang, "liked")
+                : t(lang, "like")}
+            </button>
+            <button
+              className="button button--quiet"
+              type="button"
               onClick={() => copyAppLink(detailApp)}
             >
               {copiedId === detailApp.id ? (
                 <>
                   <Check size={16} />
-                  Link copied
+                  {t(lang, "linkCopied")}
                 </>
               ) : (
                 <>
                   <Link2 size={16} />
-                  Copy link
+                  {t(lang, "copyLink")}
                 </>
               )}
             </button>

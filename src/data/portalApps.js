@@ -16,6 +16,14 @@ export const INITIAL_APPS = [
       "Words and review in one place",
       "Everyday practice sessions",
     ],
+    shortNoteFr: "Le vocabulaire français, chaque jour.",
+    descriptionFr:
+      "Développez votre vocabulaire français avec Lexi-Parcours : des mots, des révisions et de la pratique quotidienne.",
+    featuresFr: [
+      "Du vocabulaire français chaque jour",
+      "Mots et révisions au même endroit",
+      "Séances de pratique quotidiennes",
+    ],
   },
   {
     id: "1",
@@ -34,6 +42,14 @@ export const INITIAL_APPS = [
       "AI-assisted vocabulary",
       "Pronunciation audio",
       "Grammar rules and reading exercises",
+    ],
+    shortNoteFr: "Grammaire IA, vocabulaire et prononciation pour les lecteurs de français",
+    descriptionFr:
+      "Vocabulaire français assisté par IA, audio de prononciation, règles de grammaire et exercices de lecture interactifs pour les apprenants de français.",
+    featuresFr: [
+      "Vocabulaire assisté par IA",
+      "Audio de prononciation",
+      "Règles de grammaire et exercices de lecture",
     ],
   },
   {
@@ -54,6 +70,14 @@ export const INITIAL_APPS = [
       "Productivity tracking",
       "Billable revenue analytics",
     ],
+    shortNoteFr: "Gestion du temps interne et suivi des revenus facturables",
+    descriptionFr:
+      "Outil de suivi du temps, sessions de concentration Pomodoro, suivi de productivité et analyse des revenus facturables.",
+    featuresFr: [
+      "Sessions de concentration Pomodoro",
+      "Suivi de productivité",
+      "Analyse des revenus facturables",
+    ],
   },
   {
     id: "3",
@@ -72,6 +96,14 @@ export const INITIAL_APPS = [
       "Official-format mock tests",
       "Listening and reading practice",
       "Canadian CLB score prediction",
+    ],
+    shortNoteFr: "Tests blancs au format officiel et prédicteur de score CLB canadien",
+    descriptionFr:
+      "Tests blancs au format officiel, pratique de la compréhension orale et écrite, et prédiction du score CLB canadien.",
+    featuresFr: [
+      "Tests blancs au format officiel",
+      "Pratique de l'écoute et de la lecture",
+      "Prédiction du score CLB canadien",
     ],
   },
   {
@@ -93,6 +125,15 @@ export const INITIAL_APPS = [
       "Fuel expense logs",
       "Tax deductions and net hourly analytics",
     ],
+    shortNoteFr:
+      "Profit par quart, déductions de carburant et calculateur de salaire horaire net",
+    descriptionFr:
+      "Calculateur de revenus par quart, journal des dépenses de carburant, déductions fiscales et analyse du profit horaire net.",
+    featuresFr: [
+      "Calculateur de profit par quart",
+      "Journal des dépenses de carburant",
+      "Déductions fiscales et analyse du salaire horaire",
+    ],
   },
   {
     id: "5",
@@ -113,6 +154,15 @@ export const INITIAL_APPS = [
       "Obstacle dodging",
       "Real-time score leaderboards",
     ],
+    shortNoteFr:
+      "Course d'arcade 3D de science-fiction à grande vitesse avec mondes procéduraux",
+    descriptionFr:
+      "Course sans fin 3D à grande vitesse avec génération procédurale de terrain, esquive d'obstacles, bande-son cyber et classements en temps réel.",
+    featuresFr: [
+      "Génération procédurale de terrain",
+      "Esquive d'obstacles",
+      "Classements en temps réel",
+    ],
   },
   {
     id: "6",
@@ -131,6 +181,14 @@ export const INITIAL_APPS = [
       "Dynamic hazards",
       "Speed multipliers",
       "High-score survival",
+    ],
+    shortNoteFr: "Esquiveur d'arcade néon au rythme effréné et survie en enfer de balles",
+    descriptionFr:
+      "Jeu d'arcade néon rétro au rythme effréné avec dangers dynamiques, multiplicateurs de vitesse, effets de particules et survie aux meilleurs scores.",
+    featuresFr: [
+      "Dangers dynamiques",
+      "Multiplicateurs de vitesse",
+      "Survie aux meilleurs scores",
     ],
   },
   {
@@ -151,6 +209,14 @@ export const INITIAL_APPS = [
       "Reaction-time analytics",
       "Precision accuracy tests",
     ],
+    shortNoteFr: "Arène d'entraînement à la vitesse de réaction en moins d'une milliseconde",
+    descriptionFr:
+      "Outil de référence de vitesse de réflexe avec suivi des stimuli visuels, analyse du temps de réaction et tests de précision.",
+    featuresFr: [
+      "Suivi des stimuli visuels",
+      "Analyse du temps de réaction",
+      "Tests de précision",
+    ],
   },
   {
     id: "8",
@@ -169,6 +235,14 @@ export const INITIAL_APPS = [
       "3D glass-shattering physics",
       "Temporal warp tunnels",
       "Rhythmic destruction",
+    ],
+    shortNoteFr: "Physique 3D qui brise le verre et arcade de distorsion dimensionnelle",
+    descriptionFr:
+      "Expérience d'arcade physique 3D hypnotique qui fracasse des obstacles en verre cristallin, des tunnels de distorsion temporelle et une destruction rythmée.",
+    featuresFr: [
+      "Physique 3D qui brise le verre",
+      "Tunnels de distorsion temporelle",
+      "Destruction rythmée",
     ],
   },
 ];

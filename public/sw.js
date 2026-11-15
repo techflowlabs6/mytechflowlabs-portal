@@ -35,8 +35,8 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
 
-  // The catalog must stay fresh: network first, cache as a fallback.
-  if (url.pathname === "/apps.json") {
+  // The catalog and changelog must stay fresh: network first, cache as a fallback.
+  if (url.pathname === "/apps.json" || url.pathname === "/changelog.json") {
     event.respondWith(
       fetch(request)
         .then((response) => {
