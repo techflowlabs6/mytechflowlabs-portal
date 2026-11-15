@@ -32,7 +32,7 @@ function isEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return json(res, 405, { error: "Use POST for this endpoint." });
@@ -102,4 +102,4 @@ module.exports = async (req, res) => {
   } catch {
     return json(res, 502, { error: "Could not reach the email provider. Try again in a moment." });
   }
-};
+}
