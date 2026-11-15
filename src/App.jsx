@@ -57,6 +57,7 @@ import {
 } from "./lib/portalState.js";
 import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
+import { readVideosOpen, writeVideosOpen } from "./lib/uiPrefs.js";
 import {
   effectiveCounts,
   fetchSharedStats,
@@ -589,49 +590,71 @@ function ChangelogView({ entries, failed, lang }) {
 }
 
 function VideosRow({ videos, lang }) {
+  const [open, setOpen] = useState(() => readVideosOpen(storage()));
   if (!videos.length) return null;
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    writeVideosOpen(storage(), next);
+  };
   return (
     <section className="videos" aria-labelledby="videos-title">
-      <h2 id="videos-title">{t(lang, "videosTitle")}</h2>
-      <p>{t(lang, "videosNote")}</p>
-      <div className="videos-row">
-        {videos.map((video) => (
+      <div className="videos-head">
+        <h2 id="videos-title">{t(lang, "videosTitle")}</h2>
+        <button
+          type="button"
+          className="videos-toggle"
+          aria-expanded={open}
+          aria-controls="videos-body"
+          onClick={toggle}
+        >
+          {open ? t(lang, "videosHide") : t(lang, "videosShow")}
+          <span aria-hidden="true">{open ? "▾" : "▸"}</span>
+        </button>
+      </div>
+      {open && (
+        <>
+          <p>{t(lang, "videosNote")}</p>
+          <div id="videos-body" className="videos-row">
+            {videos.map((video) => (
+              <a
+                key={video.id}
+                className="video-card"
+                href={video.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {video.thumbnail && (
+                  <img
+                    src={video.thumbnail}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
+                <span className="video-title">{video.title}</span>
+                {video.publishedAt && (
+                  <time dateTime={video.publishedAt}>
+                    {new Date(video.publishedAt).toLocaleDateString(
+                      lang === "fr" ? "fr-FR" : "en-CA",
+                      { year: "numeric", month: "short", day: "numeric" },
+                    )}
+                  </time>
+                )}
+              </a>
+            ))}
+          </div>
           <a
-            key={video.id}
-            className="video-card"
-            href={video.url}
+            className="button button--quiet"
+            href="https://www.youtube.com/@TechFlowLabs"
             target="_blank"
             rel="noopener noreferrer"
           >
-            {video.thumbnail && (
-              <img
-                src={video.thumbnail}
-                alt=""
-                loading="lazy"
-                decoding="async"
-              />
-            )}
-            <span className="video-title">{video.title}</span>
-            {video.publishedAt && (
-              <time dateTime={video.publishedAt}>
-                {new Date(video.publishedAt).toLocaleDateString(
-                  lang === "fr" ? "fr-FR" : "en-CA",
-                  { year: "numeric", month: "short", day: "numeric" },
-                )}
-              </time>
-            )}
+            {t(lang, "watchOnYouTube")}
+            <ArrowUpRight size={16} aria-hidden="true" />
           </a>
-        ))}
-      </div>
-      <a
-        className="button button--quiet"
-        href="https://www.youtube.com/@TechFlowLabs"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {t(lang, "watchOnYouTube")}
-        <ArrowUpRight size={16} aria-hidden="true" />
-      </a>
+        </>
+      )}
     </section>
   );
 }

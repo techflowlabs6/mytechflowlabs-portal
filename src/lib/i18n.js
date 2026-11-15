@@ -91,6 +91,8 @@ export const STRINGS = {
     mostLovedNote: "The apps visitors love most.",
     videosTitle: "Latest from TechFlow Labs",
     videosNote: "Fresh from the YouTube channel.",
+    videosShow: "Show videos",
+    videosHide: "Hide videos",
     watchOnYouTube: "Watch on YouTube",
     aboutLead:
       "One home for everything TechFlow Labs builds — French learning, focus tools, money trackers and arcade games.",
@@ -180,6 +182,8 @@ export const STRINGS = {
     mostLovedNote: "Les applis préférées des visiteurs.",
     videosTitle: "Les dernières vidéos de TechFlow Labs",
     videosNote: "Tout droit de la chaîne YouTube.",
+    videosShow: "Afficher les vidéos",
+    videosHide: "Masquer les vidéos",
     watchOnYouTube: "Regarder sur YouTube",
     aboutLead:
       "Un seul endroit pour tout ce que TechFlow Labs crée — apprentissage du français, outils de concentration, suivi d'argent et jeux d'arcade.",
