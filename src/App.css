@@ -1495,3 +1495,344 @@
     flex: 1;
   }
 }
+
+/* ---- Portal upgrades: spotlight, sorting, badges, forms, footer ---- */
+
+.search-hint {
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #758072;
+  background: var(--surface-2);
+  flex-shrink: 0;
+}
+.sort-field {
+  flex-shrink: 0;
+}
+.sort-field select {
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.spotlight {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.spotlight-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--citrus);
+  color: #152019;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+.spotlight-inner {
+  display: grid;
+  grid-template-columns: minmax(220px, 380px) 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.spotlight-art {
+  position: relative;
+  min-height: 230px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #25352d;
+}
+.spotlight-copy h2 {
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
+}
+.spotlight-note {
+  font-size: 14px;
+  font-weight: 650;
+  margin-top: 8px;
+}
+.spotlight-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 10px;
+  max-width: 560px;
+}
+.spotlight-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.jump-back {
+  margin-bottom: 28px;
+}
+.jump-back h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.jump-back > p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.jump-back-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.jump-back-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.jump-back-chip span {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.status-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  line-height: 1.5;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  padding: 3px 7px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #152019;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.featured-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+  text-transform: uppercase;
+  line-height: 1.5;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  padding: 3px 7px;
+  background: var(--citrus);
+  color: #152019;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.request-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 8px 0 28px;
+}
+.request-band p {
+  font-size: 14px;
+}
+
+.detail-art {
+  position: relative;
+  height: 200px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #25352d;
+  margin-bottom: 16px;
+}
+.detail-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.detail-subheading {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 18px 0 8px;
+}
+.detail-features {
+  margin: 0 0 8px;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form-note {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.form-note--error {
+  color: #b3261e;
+}
+.form-note--sent {
+  color: #2e7d32;
+}
+.form-note--sending {
+  color: var(--muted);
+}
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+.checkbox-field input {
+  width: 18px;
+  height: 18px;
+  accent-color: #74961d;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px 32px;
+  align-items: start;
+  font-size: 13px;
+  color: var(--ink);
+  padding: 28px 0 8px;
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+}
+.footer-brand {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.footer-brand strong {
+  font-size: 15px;
+}
+.footer-brand p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.footer-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 6px;
+}
+.newsletter {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  max-width: 520px;
+}
+.newsletter label {
+  font-weight: 700;
+  font-size: 14px;
+}
+.newsletter-row {
+  display: flex;
+  gap: 10px;
+}
+.newsletter-row input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+.newsletter .form-note {
+  margin: 0;
+}
+.footer-bottom {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.back-to-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+[data-theme="dark"] .search-hint {
+  color: var(--muted);
+}
+[data-theme="dark"] .form-note--error {
+  color: #f28b82;
+}
+[data-theme="dark"] .form-note--sent {
+  color: #81c784;
+}
+
+@media (max-width: 700px) {
+  .spotlight-inner {
+    grid-template-columns: 1fr;
+  }
+  .spotlight-art {
+    min-height: 190px;
+  }
+  .footer-inner {
+    grid-template-columns: 1fr;
+  }
+  .newsletter-row {
+    flex-direction: column;
+  }
+  .newsletter-row .button {
+    width: 100%;
+  }
+  .sort-field {
+    width: 100%;
+  }
+  .sort-field select {
+    width: 100%;
+  }
+}

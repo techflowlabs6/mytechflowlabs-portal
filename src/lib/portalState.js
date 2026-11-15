@@ -5,6 +5,21 @@ export const ADMIN_KEY = "mytechflow_admin_clean";
 export const MIGRATION_KEY = "mytechflow_citrus_v1";
 export const APPS_SAVED_AT_KEY = "mytechflow_apps_saved_at";
 export const PUBLISH_TOKEN_KEY = "mytechflow_publish_token";
+export const LAUNCH_KEY = "mytechflow_launches_v1";
+
+/** Card badges: live apps, beta tests, and apps still on the way. */
+export const STATUSES = ["live", "beta", "soon"];
+export const STATUS_LABELS = {
+  live: "Live",
+  beta: "Beta",
+  soon: "Coming soon",
+};
+export const SORTS = [
+  { value: "featured", label: "Featured first" },
+  { value: "newest", label: "Newest" },
+  { value: "az", label: "A–Z" },
+  { value: "launched", label: "Most launched" },
+];
 export const CATEGORIES = [
   "All",
   "Education",
@@ -97,6 +112,12 @@ export function hydrateApps(saved, migrated) {
             typeof app.description === "string" ? app.description : "",
           category:
             typeof app.category === "string" ? app.category : "Productivity",
+          status: STATUSES.includes(app.status) ? app.status : "live",
+          featured: app.featured === true,
+          addedAt: typeof app.addedAt === "string" ? app.addedAt : "",
+          features: Array.isArray(app.features)
+            ? app.features.filter((item) => typeof item === "string")
+            : [],
         }))
     : INITIAL_APPS.map((app) => ({ ...app }));
 
@@ -157,4 +178,56 @@ export function defaultArtwork(app) {
     (seed) => seed.id === app.id && seed.imageUrl === app.imageUrl,
   );
   return index >= 0 ? index : null;
+}
+
+/** "New" badge: an app added in the last 30 days. */
+export function isNewApp(app, now = new Date()) {
+  const added = Date.parse(app.addedAt || "");
+  if (Number.isNaN(added)) return false;
+  const age = now.getTime() - added;
+  return age >= 0 && age < 30 * 24 * 60 * 60 * 1000;
+}
+
+export function sortApps(apps, sort, launchCounts = {}) {
+  const addedMs = (app) => {
+    const t = Date.parse(app.addedAt || "");
+    return Number.isNaN(t) ? 0 : t;
+  };
+  const list = [...apps];
+  switch (sort) {
+    case "newest":
+      return list.sort((a, b) => addedMs(b) - addedMs(a));
+    case "az":
+      return list.sort((a, b) => a.name.localeCompare(b.name));
+    case "launched":
+      return list.sort(
+        (a, b) => (launchCounts[b.id] || 0) - (launchCounts[a.id] || 0),
+      );
+    case "featured":
+    default:
+      return list.sort(
+        (a, b) => Number(b.featured === true) - Number(a.featured === true),
+      );
+  }
+}
+
+/** Per-device launch counts (localStorage): powers "Most launched" and "Jump back in". */
+export function readLaunchCounts(store) {
+  try {
+    const raw = JSON.parse(store?.getItem(LAUNCH_KEY) || "{}");
+    return raw && typeof raw === "object" ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+export function recordLaunch(store, appId) {
+  const counts = readLaunchCounts(store);
+  counts[appId] = (counts[appId] || 0) + 1;
+  try {
+    store?.setItem(LAUNCH_KEY, JSON.stringify(counts));
+  } catch {
+    /* Storage may be unavailable in private browsing. */
+  }
+  return counts;
 }

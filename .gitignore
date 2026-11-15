@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# PWA icons: generated at build time from public/icon-*.png.b64
+public/icon-*.png

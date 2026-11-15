@@ -1,25 +1,32 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  ArrowUp,
   ArrowUpRight,
-  Search,
-  X,
-  Menu,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Code2,
+  Download,
+  History,
+  Info,
+  Lightbulb,
+  Link2,
+  LogOut,
   Mail,
-  Zap,
+  Menu,
+  Moon,
+  Pencil,
   Plus,
   RotateCcw,
-  LogOut,
-  Info,
-  WifiOff,
-  ChevronDown,
-  Pencil,
-  Trash2,
-  CheckCircle2,
-  Code2,
+  Search,
+  Send,
+  Star,
   Sun,
-  Moon,
+  Trash2,
   Upload,
-  Download,
+  WifiOff,
+  X,
+  Zap,
 } from "lucide-react";
 import { INITIAL_APPS, SKILLS } from "./data/portalApps.js";
 import {
@@ -27,19 +34,27 @@ import {
   APPS_KEY,
   CATEGORIES,
   PUBLISH_TOKEN_KEY,
+  SORTS,
+  STATUSES,
+  STATUS_LABELS,
   appsJsonPayload,
   defaultArtwork,
   filterApps,
   isLexi,
+  isNewApp,
   parseAppsJson,
   readAdmin,
   readApps,
+  readLaunchCounts,
   readSavedAt,
+  recordLaunch,
   safeImageUrl,
   safeWebUrl,
+  sortApps,
   writeApps,
   writeSavedAt,
 } from "./lib/portalState.js";
+import { ADMIN_EMAIL, buildContactMailto, sendContact } from "./lib/contact.js";
 import { applyTheme, readTheme, writeTheme } from "./lib/theme.js";
 import {
   MAX_UPLOAD_BYTES,
@@ -50,8 +65,13 @@ import {
 import "./App.css";
 
 export { INITIAL_APPS } from "./data/portalApps.js";
-const ADMIN_EMAIL = "techflowlabs6@gmail.com";
-const CONTACT_MAILTO = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent("Inquiry via MyTechFlow Labs")}&body=${encodeURIComponent("Hi MyTechFlow Labs team,\n\nI am reaching out regarding...")}`;
+const CONTACT_MAILTO = buildContactMailto("message");
+const SOCIAL_LINKS = [
+  { label: "YouTube", url: "https://www.youtube.com/@TechFlowLabs" },
+  { label: "Instagram", url: "https://www.instagram.com/techflowlabs6" },
+  { label: "X", url: "https://x.com/Techflowlabs6" },
+  { label: "Threads", url: "https://www.threads.net/@techflowlabs6" },
+];
 const storage = () => {
   try {
     return window.localStorage;
@@ -158,6 +178,75 @@ function Dialog({ title, onClose, children, className = "" }) {
   );
 }
 
+function ContactForm({ kind, status, onSubmit }) {
+  const isRequest = kind === "request";
+  return (
+    <form onSubmit={(event) => onSubmit(event, kind)}>
+      <p className="dialog-intro">
+        {isRequest
+          ? "Tell me what to build next — one line is enough."
+          : "Questions, feedback or business — every message gets read."}
+      </p>
+      <div className="form-field">
+        <label htmlFor="contact-name">Your name</label>
+        <input
+          id="contact-name"
+          name="name"
+          maxLength={120}
+          autoComplete="name"
+          placeholder="Your name"
+        />
+      </div>
+      <div className="form-field">
+        <label htmlFor="contact-email">
+          Email {kind === "message" ? "(optional — so I can reply)" : ""}
+        </label>
+        <input
+          id="contact-email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+        />
+      </div>
+      <div className="form-field">
+        <label htmlFor="contact-message">
+          {isRequest ? "Your app idea *" : "Message *"}
+        </label>
+        <textarea
+          id="contact-message"
+          name="message"
+          rows={4}
+          required
+          maxLength={2000}
+          placeholder={
+            isRequest
+              ? "e.g. A Pomodoro timer that syncs with TimeLog…"
+              : "Hi…"
+          }
+        />
+      </div>
+      {status.state !== "idle" && (
+        <p className={`form-note form-note--${status.state}`} role="status">
+          {status.message}
+        </p>
+      )}
+      <button
+        className="button button--primary full-width"
+        type="submit"
+        disabled={status.state === "sending" || status.state === "sent"}
+      >
+        <Send size={16} />
+        {status.state === "sending"
+          ? "Sending…"
+          : isRequest
+            ? "Send app idea"
+            : "Send message"}
+      </button>
+    </form>
+  );
+}
+
 function AppArtwork({ app, artwork, onReady }) {
   if (artwork !== null)
     return (
@@ -196,7 +285,17 @@ function AppArtwork({ app, artwork, onReady }) {
   ) : null;
 }
 
-function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
+function AppCard({
+  app,
+  index,
+  isAdmin,
+  copied,
+  onEdit,
+  onDelete,
+  onDetails,
+  onLaunch,
+  onCopyLink,
+}) {
   const [artReady, setArtReady] = useState(false);
   const artwork = defaultArtwork(app);
   const light = artwork === 2 || artwork === 8;
@@ -221,10 +320,16 @@ function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
         aria-disabled={!url || undefined}
         aria-label={`Launch ${app.name} (opens in a new tab)`}
         tabIndex={url ? 0 : -1}
+        onClick={() => onLaunch(app)}
       >
         <div className="card-heading">
           <span className="eyebrow">{categoryLabel(app.category)}</span>
-          {isLexi(app) && <span className="new-label">New</span>}
+          {isNewApp(app) && <span className="new-label">New</span>}
+          {app.status && app.status !== "live" && (
+            <span className="status-label">
+              {STATUS_LABELS[app.status] || app.status}
+            </span>
+          )}
         </div>
         <h3>{app.name}</h3>
         {app.shortNote && <p className="card-note">{app.shortNote}</p>}
@@ -234,6 +339,14 @@ function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
         </span>
       </a>
       <div className="card-tools">
+        <button
+          className="card-tool"
+          onClick={() => onCopyLink(app)}
+          aria-label={`Copy link to ${app.name}`}
+          title="Copy app link"
+        >
+          {copied ? <Check size={17} /> : <Link2 size={17} />}
+        </button>
         <button
           className="card-tool"
           onClick={() => onDetails(app)}
@@ -267,6 +380,58 @@ function AppCard({ app, index, isAdmin, onEdit, onDelete, onDetails }) {
   );
 }
 
+function Spotlight({ app, onLaunch, onDetails }) {
+  const [artReady, setArtReady] = useState(false);
+  const artwork = defaultArtwork(app);
+  const url = safeWebUrl(app.url);
+  return (
+    <section className="spotlight" aria-labelledby="spotlight-title">
+      <span className="spotlight-label">
+        <Star size={14} aria-hidden="true" />
+        Featured
+      </span>
+      <div className="spotlight-inner">
+        <div className={`spotlight-art ${artReady ? "art-ready" : ""}`}>
+          <AppArtwork
+            app={app}
+            artwork={artwork}
+            onReady={() => setArtReady(true)}
+          />
+          <div className="card-shade" />
+        </div>
+        <div className="spotlight-copy">
+          <h2 id="spotlight-title">{app.name}</h2>
+          {app.shortNote && <p className="spotlight-note">{app.shortNote}</p>}
+          {app.description && (
+            <p className="spotlight-desc">{app.description}</p>
+          )}
+          <div className="spotlight-actions">
+            {url ? (
+              <a
+                className="button button--primary"
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onLaunch(app)}
+              >
+                Launch app
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            ) : null}
+            <button
+              className="button button--quiet"
+              type="button"
+              onClick={() => onDetails(app)}
+            >
+              App details
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [apps, setApps] = useState(() => readApps(storage()));
   const [isAdmin, setIsAdmin] = useState(() => readAdmin(storage()));
@@ -279,10 +444,26 @@ export default function App() {
   );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
+  const [sort, setSort] = useState("featured");
+  const [launchCounts, setLaunchCounts] = useState(() =>
+    readLaunchCounts(storage()),
+  );
+  const [catalogUpdatedAt, setCatalogUpdatedAt] = useState("");
+  const [copiedId, setCopiedId] = useState("");
+  const [contactStatus, setContactStatus] = useState({
+    state: "idle",
+    message: "",
+  });
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState({
+    state: "idle",
+    message: "",
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState(null);
   const [editingApp, setEditingApp] = useState(null);
   const [detailApp, setDetailApp] = useState(null);
+  const [detailArtReady, setDetailArtReady] = useState(false);
   const [formError, setFormError] = useState("");
   const [loginError, setLoginError] = useState("");
   const [storageFailed, setStorageFailed] = useState(false);
@@ -302,9 +483,22 @@ export default function App() {
   const [urlField, setUrlField] = useState("");
   const headerRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const searchRef = useRef(null);
   const firstAppsWrite = useRef(true);
-  const filtered = filterApps(apps, search, category);
+  const filtered = sortApps(
+    filterApps(apps, search, category),
+    sort,
+    launchCounts,
+  );
   const isFiltered = Boolean(search.trim()) || category !== "All";
+  const featuredApp =
+    apps.find((app) => app.featured) || apps.find(isLexi) || apps[0] || null;
+  const jumpBackIn = [...apps]
+    .sort(
+      (a, b) => (launchCounts[b.id] || 0) - (launchCounts[a.id] || 0),
+    )
+    .filter((app) => (launchCounts[app.id] || 0) > 0)
+    .slice(0, 4);
 
   // Theme: apply to <html> and remember the choice on this device.
   useEffect(() => {
@@ -327,6 +521,7 @@ export default function App() {
           await response.text(),
         );
         if (cancelled) return;
+        if (updatedAt) setCatalogUpdatedAt(updatedAt);
         const store = storage();
         const hasLocal = store?.getItem(APPS_KEY) !== null;
         const savedAt = readSavedAt(store);
@@ -402,15 +597,59 @@ export default function App() {
     };
   }, [menuOpen]);
 
+  // Deep link: mytechflowlabs.com/#/app/<id> opens that app's details.
+  useEffect(() => {
+    const openFromHash = () => {
+      const match = /^#\/app\/(.+)$/.exec(window.location.hash || "");
+      if (!match) return;
+      const found = readApps(storage()).find(
+        (item) => item.id === decodeURIComponent(match[1]),
+      );
+      if (found) {
+        setDetailApp(found);
+        setModal("details");
+      }
+    };
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, []);
+
+  // Press "/" anywhere to jump to search.
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key !== "/" || modal) return;
+      const target = event.target;
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      event.preventDefault();
+      searchRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [modal]);
+
   const closeModal = () => {
+    if (modal === "details" && window.location.hash.startsWith("#/app/")) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
+    }
     setModal(null);
     setFormError("");
     setLoginError("");
+    setContactStatus({ state: "idle", message: "" });
   };
   const openLogin = () => {
     setMenuOpen(false);
     setLoginError("");
     setModal("login");
+  };
+  const openContact = (kind) => {
+    setMenuOpen(false);
+    setContactStatus({ state: "idle", message: "" });
+    setModal(kind === "request" ? "request" : "contact");
   };
   const openEditor = (app = null) => {
     setEditingApp(app);
@@ -434,7 +673,109 @@ export default function App() {
   };
   const openDetails = (app) => {
     setDetailApp(app);
+    setDetailArtReady(false);
     setModal("details");
+    try {
+      window.history.replaceState(null, "", `#/app/${app.id}`);
+    } catch {
+      /* Hash deep links are a nicety, not a requirement. */
+    }
+  };
+  const handleLaunch = (app) => {
+    setLaunchCounts(recordLaunch(storage(), app.id));
+    try {
+      window.gtag?.("event", "launch_app", {
+        app_id: app.id,
+        app_name: app.name,
+      });
+    } catch {
+      /* Analytics is optional. */
+    }
+  };
+  const copyAppLink = async (app) => {
+    const link =
+      safeWebUrl(app.url) || `${window.location.origin}/#/app/${app.id}`;
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = link;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+    }
+    setCopiedId(app.id);
+    setTimeout(
+      () => setCopiedId((current) => (current === app.id ? "" : current)),
+      2000,
+    );
+  };
+  const submitContactForm = async (event, kind) => {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    const payload = {
+      name: String(fields.get("name") || "").trim(),
+      email: String(fields.get("email") || "").trim(),
+      message: String(fields.get("message") || "").trim(),
+    };
+    if (!payload.message) {
+      setContactStatus({ state: "error", message: "Write a message first." });
+      return;
+    }
+    if (payload.email && !payload.email.includes("@")) {
+      setContactStatus({
+        state: "error",
+        message: "That email address does not look valid.",
+      });
+      return;
+    }
+    setContactStatus({ state: "sending", message: "Sending…" });
+    try {
+      await sendContact(kind, payload);
+      setContactStatus({
+        state: "sent",
+        message:
+          kind === "request"
+            ? "Thanks — your app idea is in. Every one gets read."
+            : "Message sent. I'll get back to you soon.",
+      });
+    } catch {
+      // Email sending is not set up yet: hand the filled-in message to
+      // the visitor's own email app instead of losing it.
+      window.location.href = buildContactMailto(kind, payload);
+      setContactStatus({
+        state: "sent",
+        message:
+          "Email sending isn't set up yet, so I opened your email app with the message pre-filled — just press send.",
+      });
+    }
+  };
+  const submitNewsletter = async (event) => {
+    event.preventDefault();
+    const email = newsletterEmail.trim();
+    if (!email.includes("@")) {
+      setNewsletterStatus({
+        state: "error",
+        message: "Enter a valid email address.",
+      });
+      return;
+    }
+    setNewsletterStatus({ state: "sending", message: "Subscribing…" });
+    try {
+      await sendContact("subscribe", { email });
+      setNewsletterStatus({
+        state: "sent",
+        message: "You're subscribed. Welcome to TechFlow Labs updates.",
+      });
+      setNewsletterEmail("");
+    } catch {
+      window.location.href = buildContactMailto("subscribe", { email });
+      setNewsletterStatus({
+        state: "sent",
+        message: "Opening your email app to finish subscribing…",
+      });
+    }
   };
   const resetFilters = () => {
     setSearch("");
@@ -504,6 +845,10 @@ export default function App() {
       );
       return;
     }
+    const status = STATUSES.includes(String(fields.get("status")))
+      ? String(fields.get("status"))
+      : "live";
+    const featured = fields.get("featured") === "on";
     const app = {
       ...(editingApp || {}),
       id: editingApp?.id || crypto.randomUUID(),
@@ -513,11 +858,24 @@ export default function App() {
       shortNote: String(fields.get("shortNote") || "").trim(),
       description: String(fields.get("description") || "").trim(),
       category: String(fields.get("category")),
+      status,
+      featured,
+      addedAt:
+        editingApp?.addedAt || new Date().toISOString().slice(0, 10),
+      features: Array.isArray(editingApp?.features)
+        ? editingApp.features
+        : [],
     };
     setApps((previous) => {
-      const next = editingApp
+      let next = editingApp
         ? previous.map((item) => (item.id === editingApp.id ? app : item))
         : [app, ...previous];
+      // Only one app can hold the spotlight at a time.
+      if (app.featured) {
+        next = next.map((item) =>
+          item.id === app.id ? item : { ...item, featured: false },
+        );
+      }
       const lexi = next.find(isLexi);
       return lexi ? [lexi, ...next.filter((item) => item !== lexi)] : next;
     });
@@ -623,14 +981,13 @@ export default function App() {
       >
         Apps
       </a>
-      <a
-        href={CONTACT_MAILTO}
+      <button
         className="nav-link"
-        onClick={() => setMenuOpen(false)}
+        onClick={() => openContact("message")}
       >
         Contact
         <Mail size={15} aria-hidden="true" />
-      </a>
+      </button>
       {isAdmin ? (
         <button
           className="nav-link"
@@ -739,13 +1096,18 @@ export default function App() {
                 Search apps
               </label>
               <input
+                ref={searchRef}
                 id="app-search"
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search apps"
+                title="Press / to search"
                 autoComplete="off"
               />
+              <kbd className="search-hint" aria-hidden="true">
+                /
+              </kbd>
               {search && (
                 <button
                   className="search-clear"
@@ -774,6 +1136,20 @@ export default function App() {
                 ))}
               </div>
             </div>
+            <label className="sort-field">
+              <span className="sr-only">Sort apps</span>
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value)}
+                aria-label="Sort apps"
+              >
+                {SORTS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <div className="catalogue-heading">
             <h2 id="apps-title" aria-live="polite" aria-atomic="true">
@@ -785,6 +1161,42 @@ export default function App() {
             </h2>
             {isAdmin && <span className="admin-indicator">Admin mode</span>}
           </div>
+          {!isFiltered && featuredApp && (
+            <Spotlight
+              app={featuredApp}
+              onLaunch={handleLaunch}
+              onDetails={openDetails}
+            />
+          )}
+          {!isFiltered && jumpBackIn.length > 0 && (
+            <section
+              className="jump-back"
+              aria-labelledby="jump-back-title"
+            >
+              <h2 id="jump-back-title">
+                <History size={16} aria-hidden="true" />
+                Jump back in
+              </h2>
+              <p>Your most-launched apps on this device.</p>
+              <div className="jump-back-row">
+                {jumpBackIn.map((app) => (
+                  <a
+                    key={app.id}
+                    className="jump-back-chip"
+                    href={safeWebUrl(app.url) || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => handleLaunch(app)}
+                  >
+                    {app.name}
+                    <span aria-label={`${launchCounts[app.id]} launches`}>
+                      ×{launchCounts[app.id]}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
           {isAdmin && (
             <div className="admin-toolbar">
               <p>Manage the cards saved on this device.</p>
@@ -873,9 +1285,12 @@ export default function App() {
                   app={app}
                   index={index}
                   isAdmin={isAdmin}
+                  copied={copiedId === app.id}
                   onEdit={openEditor}
                   onDelete={deleteApp}
                   onDetails={openDetails}
+                  onLaunch={handleLaunch}
+                  onCopyLink={copyAppLink}
                 />
               ))}
             </div>
@@ -905,6 +1320,19 @@ export default function App() {
               )}
             </div>
           )}
+          <div className="request-band">
+            <p>
+              <strong>Missing an app?</strong> Tell me what to build next.
+            </p>
+            <button
+              className="button button--quiet"
+              type="button"
+              onClick={() => openContact("request")}
+            >
+              <Lightbulb size={16} />
+              Request an app
+            </button>
+          </div>
           <details className="capabilities" id="capabilities">
             <summary>
               <span>
@@ -929,14 +1357,77 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <div className="container footer-inner">
-          <a href={CONTACT_MAILTO}>
-            Let’s talk
-            <ArrowUpRight size={15} />
-          </a>
-          <span>© {new Date().getFullYear()} MyTechFlow Labs</span>
-          <a href={CONTACT_MAILTO} className="footer-email">
-            {ADMIN_EMAIL}
-          </a>
+          <div className="footer-brand">
+            <span className="brand-mark">
+              <Zap size={22} fill="currentColor" strokeWidth={1.5} />
+            </span>
+            <div>
+              <strong>MyTechFlow Labs</strong>
+              <p>Your apps. One place.</p>
+            </div>
+          </div>
+          <nav className="footer-links" aria-label="MyTechFlow Labs elsewhere">
+            {SOCIAL_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.label}
+                <ArrowUpRight size={14} aria-hidden="true" />
+              </a>
+            ))}
+            <a href={CONTACT_MAILTO}>Email</a>
+          </nav>
+          <form className="newsletter" onSubmit={submitNewsletter}>
+            <label htmlFor="newsletter-email">
+              Get TechFlow Labs updates
+            </label>
+            <div className="newsletter-row">
+              <input
+                id="newsletter-email"
+                type="email"
+                value={newsletterEmail}
+                onChange={(event) => setNewsletterEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+              />
+              <button
+                className="button button--primary"
+                type="submit"
+                disabled={newsletterStatus.state === "sending"}
+              >
+                Subscribe
+              </button>
+            </div>
+            {newsletterStatus.state !== "idle" && (
+              <p
+                className={`form-note form-note--${newsletterStatus.state}`}
+                role="status"
+              >
+                {newsletterStatus.message}
+              </p>
+            )}
+          </form>
+          <div className="footer-bottom">
+            <span>© {new Date().getFullYear()} MyTechFlow Labs</span>
+            {catalogUpdatedAt && (
+              <span>
+                Catalog updated{" "}
+                {new Date(catalogUpdatedAt).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            )}
+            <a href="#top" className="back-to-top">
+              Back to top
+              <ArrowUp size={14} aria-hidden="true" />
+            </a>
+          </div>
         </div>
       </footer>
 
@@ -1044,6 +1535,28 @@ export default function App() {
                 ))}
               </select>
             </div>
+            <div className="form-field">
+              <label htmlFor="form-status">Status</label>
+              <select
+                id="form-status"
+                name="status"
+                defaultValue={editingApp?.status || "live"}
+              >
+                {STATUSES.map((item) => (
+                  <option key={item} value={item}>
+                    {STATUS_LABELS[item]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="checkbox-field">
+              <input
+                type="checkbox"
+                name="featured"
+                defaultChecked={editingApp?.featured === true}
+              />
+              Feature this app in the spotlight
+            </label>
             <div className="form-field">
               <span className="form-label" id="image-source-label">
                 Card image
@@ -1173,30 +1686,101 @@ export default function App() {
           </form>
         </Dialog>
       )}
+      {(modal === "contact" || modal === "request") && (
+        <Dialog
+          title={modal === "request" ? "Request an app" : "Contact"}
+          onClose={closeModal}
+        >
+          <ContactForm
+            kind={modal}
+            status={contactStatus}
+            onSubmit={submitContactForm}
+          />
+        </Dialog>
+      )}
       {modal === "details" && detailApp && (
-        <Dialog title={detailApp.name} onClose={closeModal}>
-          <span className="detail-category">
-            {categoryLabel(detailApp.category)}
-          </span>
+        <Dialog
+          title={detailApp.name}
+          onClose={closeModal}
+          className="dialog--wide"
+        >
+          <div className={`detail-art ${detailArtReady ? "art-ready" : ""}`}>
+            <AppArtwork
+              app={detailApp}
+              artwork={defaultArtwork(detailApp)}
+              onReady={() => setDetailArtReady(true)}
+            />
+            <div className="card-shade" />
+          </div>
+          <div className="detail-badges">
+            <span className="detail-category">
+              {categoryLabel(detailApp.category)}
+            </span>
+            {isNewApp(detailApp) && <span className="new-label">New</span>}
+            {detailApp.status && detailApp.status !== "live" && (
+              <span className="status-label">
+                {STATUS_LABELS[detailApp.status] || detailApp.status}
+              </span>
+            )}
+            {detailApp.featured && (
+              <span className="featured-label">
+                <Star size={12} aria-hidden="true" />
+                Featured
+              </span>
+            )}
+          </div>
           {detailApp.shortNote && (
             <p className="detail-note">{detailApp.shortNote}</p>
           )}
           <p className="detail-description">
             {detailApp.description || "Open the app to explore more."}
           </p>
-          {safeWebUrl(detailApp.url) ? (
-            <a
-              className="button button--primary full-width"
-              href={safeWebUrl(detailApp.url)}
-              target="_blank"
-              rel="noopener noreferrer"
+          {Array.isArray(detailApp.features) &&
+            detailApp.features.length > 0 && (
+              <>
+                <h3 className="detail-subheading">What&apos;s inside</h3>
+                <ul className="detail-features">
+                  {detailApp.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          <div className="form-actions">
+            {safeWebUrl(detailApp.url) ? (
+              <a
+                className="button button--primary"
+                href={safeWebUrl(detailApp.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handleLaunch(detailApp)}
+              >
+                Launch app
+                <ArrowUpRight size={18} />
+              </a>
+            ) : (
+              <p className="form-error">
+                This app needs a valid web address.
+              </p>
+            )}
+            <button
+              className="button button--quiet"
+              type="button"
+              onClick={() => copyAppLink(detailApp)}
             >
-              Launch app
-              <ArrowUpRight size={18} />
-            </a>
-          ) : (
-            <p className="form-error">This app needs a valid web address.</p>
-          )}
+              {copiedId === detailApp.id ? (
+                <>
+                  <Check size={16} />
+                  Link copied
+                </>
+              ) : (
+                <>
+                  <Link2 size={16} />
+                  Copy link
+                </>
+              )}
+            </button>
+          </div>
         </Dialog>
       )}
     </div>
