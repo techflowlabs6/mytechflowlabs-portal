@@ -195,11 +195,34 @@ export function filterApps(apps, search, category) {
   );
 }
 
+/**
+ * Stable atlas tile per seed app id. The card art lives in a 3x3 sprite
+ * (/art/apps-atlas.webp), so a tile must NEVER follow the app's position
+ * in the catalog: inserting SpeakSharp after Lexi shifted every later
+ * app one tile along and pushed Smash Hit (tile 9) off the atlas
+ * entirely, so its card went blank and every card showed its neighbour's
+ * picture. New apps have no tile and show their own image (or a plain
+ * card) instead.
+ */
+const ART_TILES = {
+  "lexi-parcours": 0,
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+};
+
 export function defaultArtwork(app) {
-  const index = INITIAL_APPS.findIndex(
-    (seed) => seed.id === app.id && seed.imageUrl === app.imageUrl,
+  const seed = INITIAL_APPS.find(
+    (entry) => entry.id === app.id && entry.imageUrl === app.imageUrl,
   );
-  return index >= 0 ? index : null;
+  if (!seed) return null;
+  const tile = ART_TILES[seed.id];
+  return typeof tile === "number" ? tile : null;
 }
 
 /** "New" badge: an app added in the last 30 days. */

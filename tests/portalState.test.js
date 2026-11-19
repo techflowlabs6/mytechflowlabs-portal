@@ -169,14 +169,32 @@ test("app and image links accept only complete http(s) URLs", () => {
 });
 
 test("default art never replaces a user-customized image", () => {
+  const smashHit = INITIAL_APPS.find((app) => app.id === "8");
   assert.equal(defaultArtwork(INITIAL_APPS[0]), 0);
-  assert.equal(defaultArtwork(INITIAL_APPS[8]), 8);
+  assert.equal(defaultArtwork(smashHit), 8);
   assert.equal(
     defaultArtwork({
-      ...INITIAL_APPS[1],
+      ...smashHit,
       imageUrl: "https://example.com/custom.jpg",
     }),
     null,
   );
   assert.equal(defaultArtwork({ id: "custom", imageUrl: "" }), null);
+});
+
+test("atlas tiles follow the app id, not the catalog position", () => {
+  // SpeakSharp was inserted after Lexi, moving every later app one slot
+  // down. Tiles must stay put: Smash Hit keeps tile 8, Reflex Rush 7,
+  // and SpeakSharp (no tile) shows no atlas art.
+  const byId = (id) => INITIAL_APPS.find((app) => app.id === id);
+  assert.equal(defaultArtwork(byId("lexi-parcours")), 0);
+  assert.equal(defaultArtwork(byId("1")), 1);
+  assert.equal(defaultArtwork(byId("2")), 2);
+  assert.equal(defaultArtwork(byId("3")), 3);
+  assert.equal(defaultArtwork(byId("4")), 4);
+  assert.equal(defaultArtwork(byId("5")), 5);
+  assert.equal(defaultArtwork(byId("6")), 6);
+  assert.equal(defaultArtwork(byId("7")), 7);
+  assert.equal(defaultArtwork(byId("8")), 8);
+  assert.equal(defaultArtwork(byId("speaksharp")), null);
 });
