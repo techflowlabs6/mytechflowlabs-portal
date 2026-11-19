@@ -51,6 +51,7 @@ import {
   recordLaunch,
   safeImageUrl,
   safeWebUrl,
+  shouldAdoptCommitted,
   sortApps,
   writeApps,
   writeSavedAt,
@@ -848,8 +849,9 @@ export default function App() {
   // Permanent catalog: adopt the GitHub-committed public/apps.json when it
   // is newer than this device's copy (or when this device has no copy yet).
   // Local edits that were never published are never silently discarded:
-  // adoption only happens for a fresh device, or when the committed
-  // catalog is newer than the last local change.
+  // adoption only happens for a fresh device, for a copy its owner never
+  // edited (no saved-at stamp), or when the committed catalog is newer
+  // than the last local change.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -864,7 +866,7 @@ export default function App() {
         const store = storage();
         const hasLocal = store?.getItem(APPS_KEY) !== null;
         const savedAt = readSavedAt(store);
-        if (!hasLocal || (savedAt && updatedAt && updatedAt > savedAt)) {
+        if (shouldAdoptCommitted({ hasLocal, savedAt, updatedAt })) {
           setApps(committed);
           writeSavedAt(store, updatedAt || new Date().toISOString());
         }

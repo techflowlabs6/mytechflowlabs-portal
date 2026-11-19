@@ -9,6 +9,7 @@ import {
   hydrateApps,
   readApps,
   safeWebUrl,
+  shouldAdoptCommitted,
   writeApps,
 } from "../src/lib/portalState.js";
 
@@ -39,6 +40,48 @@ test("SpeakSharp is in the catalog with its live link and French copy", () => {
   assert.equal(app.shortNote, "Say it sharp, say it right.");
   assert.ok(app.descriptionFr.length > 20);
   assert.ok(app.featuresFr.length >= 3);
+});
+
+test("catalog adoption: fresh, never-edited and newer-commit devices adopt; unpublished edits win", () => {
+  const committed = "2026-11-19T19:25:00.000Z";
+  // Fresh device: no stored copy at all.
+  assert.equal(
+    shouldAdoptCommitted({ hasLocal: false, savedAt: "", updatedAt: committed }),
+    true,
+  );
+  // Stored copy its owner never edited: no local work to lose, so the
+  // committed catalog is adopted (this is what hid SpeakSharp).
+  assert.equal(
+    shouldAdoptCommitted({ hasLocal: true, savedAt: "", updatedAt: committed }),
+    true,
+  );
+  // Edited before the last commit: adopt the newer committed catalog.
+  assert.equal(
+    shouldAdoptCommitted({
+      hasLocal: true,
+      savedAt: "2026-11-15T10:00:00.000Z",
+      updatedAt: committed,
+    }),
+    true,
+  );
+  // Edited after the last commit and never published: keep the local copy.
+  assert.equal(
+    shouldAdoptCommitted({
+      hasLocal: true,
+      savedAt: "2026-11-20T10:00:00.000Z",
+      updatedAt: committed,
+    }),
+    false,
+  );
+  // No committed date to compare with: keep the local copy.
+  assert.equal(
+    shouldAdoptCommitted({
+      hasLocal: true,
+      savedAt: "2026-11-15T10:00:00.000Z",
+      updatedAt: "",
+    }),
+    false,
+  );
 });
 
 test("migration preserves customized cards and a shortened existing collection", () => {

@@ -72,6 +72,21 @@ export function writeSavedAt(storage, isoDate) {
   }
 }
 
+/**
+ * Decide whether this device should adopt the GitHub-committed catalog.
+ * A stored copy with no saved-at stamp was never edited by its owner, so
+ * adopting can never discard local work — the old rule skipped those
+ * devices entirely, which hid every newly committed app from them
+ * (SpeakSharp never appeared on a device that had only ever browsed).
+ * A device with unpublished edits (saved after the last commit) keeps
+ * its own copy instead.
+ */
+export function shouldAdoptCommitted({ hasLocal, savedAt, updatedAt }) {
+  if (!hasLocal) return true;
+  if (!savedAt) return true;
+  return Boolean(updatedAt) && updatedAt > savedAt;
+}
+
 /** The committed public/apps.json shape: { version: 1, updatedAt, apps: [...] }. */
 export function appsJsonPayload(apps, updatedAt = new Date().toISOString()) {
   return { version: 1, updatedAt, apps };
