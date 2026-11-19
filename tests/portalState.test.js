@@ -20,17 +20,30 @@ const memory = (initial) => {
   };
 };
 
-test("fresh installs have nine launchable apps and Lexi first", () => {
+test("fresh installs have ten launchable apps and Lexi first", () => {
   const apps = readApps(memory());
-  assert.equal(apps.length, 9);
+  assert.equal(apps.length, 10);
   assert.equal(apps[0].url, "https://lexi.mytechflowlabs.com/");
   assert.ok(apps.every((app) => safeWebUrl(app.url)));
-  assert.equal(new Set(apps.map((app) => app.id)).size, 9);
+  assert.equal(new Set(apps.map((app) => app.id)).size, 10);
+});
+
+test("SpeakSharp is in the catalog with its live link and French copy", () => {
+  const app = INITIAL_APPS.find((entry) => entry.id === "speaksharp");
+  assert.ok(app);
+  assert.equal(app.name, "SpeakSharp");
+  assert.equal(app.url, "https://speaksharp.mytechflowlabs.com/");
+  assert.equal(app.category, "Education");
+  assert.equal(app.status, "live");
+  assert.equal(app.addedAt, "2026-11-19");
+  assert.equal(app.shortNote, "Say it sharp, say it right.");
+  assert.ok(app.descriptionFr.length > 20);
+  assert.ok(app.featuresFr.length >= 3);
 });
 
 test("migration preserves customized cards and a shortened existing collection", () => {
   const edited = {
-    ...INITIAL_APPS[1],
+    ...INITIAL_APPS[2],
     name: "My French reader",
     description: "My custom notes",
     imageUrl: "https://example.com/mine.jpg",
@@ -72,7 +85,7 @@ test("intentional deletions, including an empty collection, survive reloads afte
 });
 
 test("corrupt or unavailable browser storage falls back safely", () => {
-  assert.equal(readApps(memory({ [APPS_KEY]: "{invalid" })).length, 9);
+  assert.equal(readApps(memory({ [APPS_KEY]: "{invalid" })).length, 10);
   const blocked = {
     getItem() {
       throw Error("blocked");
@@ -81,7 +94,7 @@ test("corrupt or unavailable browser storage falls back safely", () => {
       throw Error("quota");
     },
   };
-  assert.equal(readApps(blocked).length, 9);
+  assert.equal(readApps(blocked).length, 10);
   assert.equal(writeApps(blocked, INITIAL_APPS), false);
 });
 

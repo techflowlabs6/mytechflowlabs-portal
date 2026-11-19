@@ -169,20 +169,20 @@ test("uptime: handler checks every catalog app in parallel", async (t) => {
   });
   assert.equal(status, 200);
   assert.equal(typeof body.checkedAt, "string");
-  assert.equal(body.results.length, 9);
+  assert.equal(body.results.length, 10);
   assert.equal(body.results.every((row) => typeof row.ms === "number"), true);
   const driver = body.results.find((row) => row.id === "4");
   assert.equal(driver.ok, false);
   assert.equal(driver.status, 500);
   assert.equal(
     body.results.filter((row) => row.ok).length,
-    8,
+    9,
   );
-  // Eight healthy apps are HEAD-only; the driver's HEAD 500 falls back
+  // Nine healthy apps are HEAD-only; the driver's HEAD 500 falls back
   // to a GET (which also 500s), so there is exactly one GET call.
   assert.equal(
     seen.filter(([, method]) => method === "HEAD").length,
-    9,
+    10,
   );
   assert.equal(
     seen.filter(([, method]) => method === "GET").length,
