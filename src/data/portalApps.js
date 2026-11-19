@@ -26,6 +26,32 @@ export const INITIAL_APPS = [
     ],
   },
   {
+    id: "speaksharp",
+    name: "SpeakSharp",
+    shortNote: "Say it sharp, say it right.",
+    url: "https://speaksharp.mytechflowlabs.com/",
+    imageUrl: "",
+    description:
+      "English-to-English mastery app: precision vocabulary with nuance, grammar mastery, a writing lab, speaking practice, idioms, a CEFR placement test and spaced repetition.",
+    category: "Education",
+    status: "live",
+    featured: false,
+    addedAt: "2026-11-19",
+    features: [
+      "Precision vocabulary with nuance",
+      "Grammar mastery, writing lab and speaking practice",
+      "CEFR placement test and spaced repetition",
+    ],
+    shortNoteFr: "Dites-le avec netteté, dites-le bien.",
+    descriptionFr:
+      "Application de maîtrise de l'anglais : vocabulaire précis avec nuances, maîtrise de la grammaire, atelier d'écriture, pratique orale, expressions idiomatiques, test de placement CECR et répétition espacée.",
+    featuresFr: [
+      "Vocabulaire précis avec nuances",
+      "Grammaire, atelier d'écriture et pratique orale",
+      "Test de placement CECR et répétition espacée",
+    ],
+  },
+  {
     id: "1",
     name: "French Learner App",
     shortNote: "AI Grammar, Vocab & Pronunciation for French Readers",

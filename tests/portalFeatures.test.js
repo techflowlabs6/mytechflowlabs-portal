@@ -53,7 +53,7 @@ test("uploaded image helpers measure size and extension", () => {
 test("the committed catalog round-trips through apps.json", () => {
   const payload = appsJsonPayload(INITIAL_APPS, "2026-11-14T00:00:00.000Z");
   assert.equal(payload.version, 1);
-  assert.equal(payload.apps.length, 9);
+  assert.equal(payload.apps.length, 10);
   const parsed = parseAppsJson(JSON.stringify(payload));
   assert.equal(parsed.updatedAt, "2026-11-14T00:00:00.000Z");
   assert.equal(parsed.apps[0].url, "https://lexi.mytechflowlabs.com/");
@@ -64,7 +64,7 @@ test("the committed catalog round-trips through apps.json", () => {
 test("public/apps.json is the committed source of truth and matches the seed", () => {
   const raw = fs.readFileSync(new URL("../public/apps.json", import.meta.url), "utf8");
   const { apps, updatedAt } = parseAppsJson(raw);
-  assert.equal(apps.length, 9);
+  assert.equal(apps.length, 10);
   assert.deepEqual(
     apps.map((app) => app.id),
     INITIAL_APPS.map((app) => app.id),
@@ -164,7 +164,7 @@ test("contact forms build a pre-filled mailto fallback", () => {
 test("the committed catalog carries status, featured, dates and features", () => {
   const raw = fs.readFileSync(new URL("../public/apps.json", import.meta.url), "utf8");
   const { apps } = parseAppsJson(raw);
-  assert.equal(apps.length, 9);
+  assert.equal(apps.length, 10);
   for (const app of apps) {
     assert.ok(["live", "beta", "soon"].includes(app.status), app.name);
     assert.equal(typeof app.featured, "boolean", app.name);

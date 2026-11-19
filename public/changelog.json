@@ -1,6 +1,19 @@
 {
   "entries": [
     {
+      "date": "2026-11-19",
+      "items": [
+        "SpeakSharp joins the catalog: English mastery, say it sharp, say it right",
+        "SpeakSharp detail page with shareable link (#/app/speaksharp)"
+      ],
+      "itemsFr": [
+        "SpeakSharp rejoint le catalogue : maîtrise de l'anglais, dites-le avec netteté, dites-le bien",
+        "Page de détail SpeakSharp avec lien partageable (#/app/speaksharp)"
+      ],
+      "title": "SpeakSharp joins the portal",
+      "titleFr": "SpeakSharp rejoint le portail"
+    },
+    {
       "date": "2026-11-15",
       "items": [
         "Real contact and request-an-app forms (email sending once configured)",
@@ -73,6 +86,6 @@
       "titleFr": "Lancement du portail MyTechFlow Labs"
     }
   ],
-  "updatedAt": "2026-11-15T18:16:39.918Z",
+  "updatedAt": "2026-11-19T19:25:00.000Z",
   "version": 1
 }

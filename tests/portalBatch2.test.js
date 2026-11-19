@@ -177,7 +177,7 @@ test("app text localizes to French and falls back to English", () => {
 });
 
 test("every seed app ships a French short note, description and features", () => {
-  assert.equal(INITIAL_APPS.length, 9);
+  assert.equal(INITIAL_APPS.length, 10);
   for (const app of INITIAL_APPS) {
     assert.ok(app.shortNoteFr?.length > 0, `${app.id} needs shortNoteFr`);
     assert.ok(app.descriptionFr?.length > 0, `${app.id} needs descriptionFr`);
@@ -188,7 +188,7 @@ test("every seed app ships a French short note, description and features", () =>
     );
   }
   const { apps } = parseAppsJson(fs.readFileSync("public/apps.json", "utf8"));
-  assert.equal(apps.length, 9);
+  assert.equal(apps.length, 10);
   assert.equal(apps[0].descriptionFr, INITIAL_APPS[0].descriptionFr);
 });
 
